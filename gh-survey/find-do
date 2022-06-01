@@ -1,0 +1,10 @@
+#!/bin/sh
+# Assumes `./clone-all` has been run first. Comment out final pipe parts to inspect intermediate results.
+
+repos="$(echo */)"
+echo -n "repositories: "
+echo $repos | wc -w
+echo -n "repositories matching '^\s*for .* in ' and 'let mut': "
+for d in $repos; do grep -rq '^\s*for .* in ' $d > /dev/null && grep -r 'let mut' $d | head -n1; done | wc -l
+echo -n "unique authors by head commit: "
+for d in *; do [ -d $d ] && grep -rq '^\s*for .* in ' $d > /dev/null && grep -rq 'let mut' $d && git -C $d log -1 --format='%an' @; done | sort | uniq -c | wc -l
