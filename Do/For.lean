@@ -74,10 +74,11 @@ example [LawfulMonad m] :
 := by induction xs <;> simp_all!
 
 example [LawfulMonad m] (f : β → α → m β) :
-    (do let mut y := init
-        for x in xs do
-          y ← f y x
-        return y)
+    (do' let mut y := init;
+         for x in xs do' {
+           y ← f y x
+         };
+         return y)
   =
     xs.foldlM f init
 := by induction xs generalizing init <;> simp_all!

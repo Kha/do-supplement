@@ -160,6 +160,8 @@ def Do.eval [Monad m] (s : Do m α) : m α :=  -- corresponds to the reduction r
     | ⟨Neut.val a, _⟩ => pure a
     | ⟨Neut.ret o, _⟩ => pure o
 
+notation "⟦" s "⟧" => Do.eval s
+
 /-|
 Translation Functions
 =====================
@@ -312,27 +314,26 @@ macro "D_tac" : tactic =>
       | apply Prod.Lex.left; assumption
       | apply Prod.Lex.right' <;> simp_arith })
 
-@[simp] def D [Monad m] (ρ : Assg Γ) : Stmt m Empty Γ ∅ false false α → m α
-  | Stmt.expr e => e[ρ][∅]
-  | Stmt.bind s s' => D ρ s >>= fun x => D (x, ρ) s'
+@[simp] def D [Monad m] : Stmt m Empty Γ ∅ false false α → (Γ ⊢ m α)
+  | Stmt.expr e => (e[·][∅])
+  | Stmt.bind s s' => (fun ρ => D s ρ >>= fun x => D s' (x, ρ))
   | Stmt.letmut e s =>
     have := Nat.lt_succ_of_le <| Stmt.numExts_S (Δ := []) s  -- for termination
-    let x := e[ρ][∅]
-    StateT.run' (D (x, ρ) (S s)) x
-  | Stmt.ite e s₁ s₂ => if e[ρ][∅] then D ρ s₁ else D ρ s₂
+    fun ρ =>
+      let x := e[ρ][∅]
+      StateT.run' (D (S s) (x, ρ)) x
+  | Stmt.ite e s₁ s₂ => (fun ρ => if e[ρ][∅] then D s₁ ρ else D s₂ ρ)
   | Stmt.sfor e s =>
     have := Nat.lt_succ_of_le <| Stmt.numExts_C_B (Δ := []) s  -- for termination
-    runCatch (forM e[ρ][∅] (fun x => runCatch (D (x, ρ) (C (B s)))))
-  | Stmt.ret e => nomatch e[ρ][∅]
+    fun ρ =>
+      runCatch (forM e[ρ][∅] (fun x => runCatch (D (C (B s)) (x, ρ))))
+  | Stmt.ret e => (nomatch e[·][∅])
 termination_by _ s => (s.numExts, sizeOf s)
 decreasing_by D_tac
 
--- a version with reshuffled parameters that matches the signature given in the paper
-abbrev D' [Monad m] : Stmt m Empty Γ ∅ false false α → (Γ ⊢ m α) := fun s ρ => D ρ s
-
 /-| Finally we compose `D` and `R` into the translation rule for a top-level statement (1'). -/
 
-def Do.trans [Monad m] (s : Do m α) : m α := runCatch (D ∅ (R s))
+def Do.trans [Monad m] (s : Do m α) : m α := runCatch (D (R s) ∅)
 
 /-|
 Equivalence Proof
@@ -560,7 +561,7 @@ theorem eval_C [Monad m] [LawfulMonad m] (s : Stmt m ω Γ Δ false c α) : (C s
       split <;> simp [ih']
 
 theorem D_eq [Monad m] [LawfulMonad m] : (s : Stmt m Empty Γ ∅ false false α) →
-    D ρ s = s.eval ρ ∅ >>= fun (Neut.val a, _) => pure a
+    D s ρ = s.eval ρ ∅ >>= fun (Neut.val a, _) => pure a
   | Stmt.expr e => by simp
   | Stmt.bind s₁ s₂ => by
     simp [D_eq s₁, D_eq s₂, Stmt.eval.cont]
@@ -592,7 +593,70 @@ decreasing_by D_tac
 
 /-| The equivalence proof follows from the invariants of `D` and `S`. -/
 
-theorem trans_eq_eval [Monad m] [LawfulMonad m] (s : Do m α) : Do.trans s = Do.eval s := by
+theorem trans_eq_eval [Monad m] [LawfulMonad m] (s : Do m α) : Do.trans s = ⟦s⟧ := by
   simp [D_eq, eval_R, runCatch, Do.trans, Do.eval]
   apply bind_congr; intro
   split <;> simp
+
+def ex2 [Monad m] (f : β → α → m β) (init : β) (xs : List α) : m β := by
+  /- synthesize program `e` of the given type by introducing an equality assumption
+     between it and a translation of a direct encoding in `Stmt` of the example
+     ```
+     (do let mut y := init
+         for x in xs do
+           y ← f y x
+         return y)
+     ```
+     from `For.lean`, partially evaluating the translation via the simplifier,
+     and finally solving `e` by reflexivity to the simplified expression. -/
+  suffices Σ' e : m β, Do.trans (
+      Stmt.letmut (fun _ _ => init) <|
+      Stmt.bind (
+        Stmt.sfor (fun _ _ => xs) <|
+        Stmt.bind
+          (Stmt.expr (fun (x, _) (y, _) => f y x))
+          (Stmt.assg ⟨0, by simp⟩ (fun (z, _) _ => z))) <|
+      Stmt.ret (fun _ (y, _) => y))
+    = e from this.1
+  constructor
+  simp [Do.trans, Assg.extendBot, cast]
+  rfl
+
+#print ex2
+#eval ex2 (m := Id) (fun a b => pure (a + b)) 0 [1, 2]
+
+example [Monad m] [LawfulMonad m] (f : β → α → m β) :
+    ex2 f init xs = xs.foldlM f init := by
+  unfold ex2; unfold runCatch; induction xs generalizing init <;> simp_all!
+
+def ex3 [Monad m] (p : α → m Bool) (xss : List (List α)) : m (Option α) := by
+  suffices Σ' e : m (Option α), Do.trans (
+      Stmt.bind
+        (Stmt.sfor (fun _ _ => xss) <|
+          Stmt.sfor (fun (xs, _) _ => xs) <|
+            Stmt.bind
+              (Stmt.expr (fun (x, _) _ => p x))
+              (Stmt.ite (fun (b, _) _ => b)
+                (Stmt.ret (fun (_, x, _) _ => some x))
+                (Stmt.expr (fun _ _ => pure ()))))
+        (Stmt.expr (fun _ _ => pure none)))
+    = e from this.1
+  constructor
+  simp [Do.trans, Assg.extendBot, cast]
+  rfl
+
+#print ex3
+#eval ex3 (m := Id) (fun n => n % 2 == 0) [[1, 3], [2, 4]]
+
+example [Monad m] [LawfulMonad m] (p : α → m Bool) (xss : List (List α)) :
+    ex3 p xss = xss.findSomeM? (fun xs => xs.findM? p) := by
+  unfold ex3
+  unfold runCatch
+  induction xss with
+      | nil => simp!
+      | cons xs xss ih =>
+        simp [List.findSomeM?]
+        rw [← ih, ← eq_findM]
+        induction xs with
+        | nil => simp
+        | cons x xs ih => simp; apply byCases_Bool_bind <;> simp [ih]
