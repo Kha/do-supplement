@@ -8,9 +8,9 @@ The directory `gh-survey` contains simple scripts for aggregating the use of ext
 
 ## Exploring the supplement with Lean
 
-While the [generic instructions](https://leanprover.github.io/lean4/doc/setup.html) for setting up Lean 4 can be used for interacting with this package, we will give a simplified workflow using the specific version of Lean 4 and a single editor, VS Code, in the following:
+While the [generic instructions](https://leanprover.github.io/lean4/doc/setup.html) for setting up Lean 4 can be used for interacting with this package, we will give a simplified workflow using the specific version of Lean 4 and a single editor, VS Code, that minimizes changes to the host machines in the following:
 
-* Download and unpack your platform's release of [Lean 4.0.0-nightly-2022-05-31](https://github.com/leanprover/lean4-nightly/releases/tag/nightly-2022-05-31)
+* Download and unpack your platform's release of [Lean 4.0.0-nightly-2022-06-01](https://github.com/leanprover/lean4-nightly/releases/tag/nightly-2022-06-01)
 * Add the `bin` directory of that archive to your shell's search path, e.g.
 ```bash
 $ export PATH=$PATH:~/Downloads/lean-4.0.0-linux/bin
