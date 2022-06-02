@@ -624,12 +624,14 @@ attribute [-simp] StateT.run'_eq
 We can now use this new notation to completely erase the translation functions
 from an invocation on the example `ex2` from `For.lean` (manually translated to `Stmt`).
 
-.. code-block:: lean4
+.. lean4::
+
     let mut y := init;
     for x in xs do' {
       y ← f y x
     };
     return y
+
 -/
 def ex2' [Monad m] (f : β → α → m β) (init : β) (xs : List α) : m β :=
   simp [Do.trans] in Do.trans (
@@ -658,7 +660,8 @@ example [Monad m] [LawfulMonad m] (f : β → α → m β) :
 /-!
 For one more example, consider `ex3` from `For.lean`.
 
-.. code-block:: lean4
+.. lean4::
+
     for xs in xss do' {
       for x in xs do' {
         let b ← p x;
@@ -668,6 +671,7 @@ For one more example, consider `ex3` from `For.lean`.
       }
     };
     pure none
+
 -/
 
 def ex3' [Monad m] (p : α → m Bool) (xss : List (List α)) : m (Option α) :=
