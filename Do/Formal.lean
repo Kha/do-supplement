@@ -1,3 +1,6 @@
+import Do.For  -- import `runCatch`
+import Lean
+
 /-|
 ==========================================
 Formalization of Extended `do` Translation
@@ -7,9 +10,6 @@ This is the supplement file to the paper "‘do’ Unchained: Embracing Local Im
 Functional Language".
 It contains an intrinsically typed representation of the paper's syntax of `do` statements as well
 of their translation functions and an equivalence proof thereof to a simple denotational semantics. -/
-
-/-| We import other parts of the supplement for the `runCatch` function. -/
-import Do.For
 
 /-|
 Contexts
@@ -591,25 +591,48 @@ theorem D_eq [Monad m] [LawfulMonad m] : (s : Stmt m Empty Γ ∅ false false α
 termination_by _ s => (s.numExts, sizeOf s)
 decreasing_by D_tac
 
-/-| The equivalence proof follows from the invariants of `D` and `S`. -/
+/-| The equivalence proof cited in the paper follows from the invariants of `D` and `S`. -/
 
 theorem trans_eq_eval [Monad m] [LawfulMonad m] (s : Do m α) : Do.trans s = ⟦s⟧ := by
   simp [D_eq, eval_R, runCatch, Do.trans, Do.eval]
   apply bind_congr; intro
   split <;> simp
 
-def ex2 [Monad m] (f : β → α → m β) (init : β) (xs : List α) : m β := by
-  /- synthesize program `e` of the given type by introducing an equality assumption
-     between it and a translation of a direct encoding in `Stmt` of the example
-     ```
-     (do let mut y := init
-         for x in xs do
-           y ← f y x
-         return y)
-     ```
-     from `For.lean`, partially evaluating the translation via the simplifier,
-     and finally solving `e` by reflexivity to the simplified expression. -/
-  suffices Σ' e : m β, Do.trans (
+/-|
+Partial Evaluation
+------------------
+
+We define a new term notation `simp [...] in e` that rewrites the term e using the given
+simplification theorems.
+-/
+
+open Lean.Parser.Tactic in
+open Lean.Meta in
+open Lean.Elab in
+elab "simp" "[" simps:simpLemma,* "]" "in" e:term : term => do
+  let e ← Term.elabTermAndSynthesize e none
+  let x ← mkFreshExprMVar (← inferType e)
+  let goal ← mkFreshExprMVar (← mkEq e x)
+  Term.runTactic goal.mvarId! (← `(tactic| (simp [$simps,*]; rfl)))
+  instantiateMVars x
+
+-- further clean up generated programs
+attribute [local simp] Assg.extendBot cast
+attribute [-simp] StateT.run'_eq
+
+/-!
+We can now use this new notation to completely erase the translation functions
+from an invocation on the example `ex2` from `For.lean` (manually translated to `Stmt`).
+
+.. code-block:: lean4
+    let mut y := init;
+    for x in xs do' {
+      y ← f y x
+    };
+    return y
+-/
+def ex2' [Monad m] (f : β → α → m β) (init : β) (xs : List α) : m β :=
+  simp [Do.trans] in Do.trans (
       Stmt.letmut (fun _ _ => init) <|
       Stmt.bind (
         Stmt.sfor (fun _ _ => xs) <|
@@ -617,20 +640,38 @@ def ex2 [Monad m] (f : β → α → m β) (init : β) (xs : List α) : m β := 
           (Stmt.expr (fun (x, _) (y, _) => f y x))
           (Stmt.assg ⟨0, by simp⟩ (fun (z, _) _ => z))) <|
       Stmt.ret (fun _ (y, _) => y))
-    = e from this.1
-  constructor
-  simp [Do.trans, Assg.extendBot, cast]
-  rfl
 
+/-!
+Compare the output of the two versions - the structure is identical except for unused
+monadic layers in the formal translation, which would be harder to avoid in this typed
+approach. -/
 #print ex2
-#eval ex2 (m := Id) (fun a b => pure (a + b)) 0 [1, 2]
+#print ex2'
+
+/-! We can evaluate the generated program like any other Lean program, and prove that both versions are equivalent. -/
+#eval ex2' (m := Id) (fun a b => pure (a + b)) 0 [1, 2]
 
 example [Monad m] [LawfulMonad m] (f : β → α → m β) :
-    ex2 f init xs = xs.foldlM f init := by
-  unfold ex2; unfold runCatch; induction xs generalizing init <;> simp_all!
+    ex2' f init xs = ex2 f init xs := by
+  rw [ex2, ex2']; unfold runCatch; induction xs generalizing init <;> simp_all! [StateT.run'_eq]
 
-def ex3 [Monad m] (p : α → m Bool) (xss : List (List α)) : m (Option α) := by
-  suffices Σ' e : m (Option α), Do.trans (
+/-!
+For one more example, consider `ex3` from `For.lean`.
+
+.. code-block:: lean4
+    for xs in xss do' {
+      for x in xs do' {
+        let b ← p x;
+        if b then {
+          return some x
+        }
+      }
+    };
+    pure none
+-/
+
+def ex3' [Monad m] (p : α → m Bool) (xss : List (List α)) : m (Option α) :=
+  simp [Do.trans] in Do.trans (
       Stmt.bind
         (Stmt.sfor (fun _ _ => xss) <|
           Stmt.sfor (fun (xs, _) _ => xs) <|
@@ -640,23 +681,26 @@ def ex3 [Monad m] (p : α → m Bool) (xss : List (List α)) : m (Option α) := 
                 (Stmt.ret (fun (_, x, _) _ => some x))
                 (Stmt.expr (fun _ _ => pure ()))))
         (Stmt.expr (fun _ _ => pure none)))
-    = e from this.1
-  constructor
-  simp [Do.trans, Assg.extendBot, cast]
-  rfl
 
 #print ex3
-#eval ex3 (m := Id) (fun n => n % 2 == 0) [[1, 3], [2, 4]]
+#print ex3'
+#eval ex3' (m := Id) (fun n => n % 2 == 0) [[1, 3], [2, 4]]
 
 example [Monad m] [LawfulMonad m] (p : α → m Bool) (xss : List (List α)) :
-    ex3 p xss = xss.findSomeM? (fun xs => xs.findM? p) := by
-  unfold ex3
+    ex3' p xss = ex3 p xss := by
+  rw [ex3, ex3']
   unfold runCatch
   induction xss with
-      | nil => simp!
-      | cons xs xss ih =>
-        simp [List.findSomeM?]
-        rw [← ih, ← eq_findM]
-        induction xs with
-        | nil => simp
-        | cons x xs ih => simp; apply byCases_Bool_bind <;> simp [ih]
+  | nil => simp!
+  | cons xs xss ih =>
+    simp
+    induction xs with
+    | nil => simp [←ih]
+    | cons x xs ih => simp; apply byCases_Bool_bind <;> simp [ih]
+
+/-!
+While it would be possible to override our `do'` notation such that its named syntax
+is first translated to nameless `Stmt` constructors and then applied to `simp [Do.trans] in`,
+for demonstration purposes we decided to encode these examples manually. In practice, the
+macro implementation remains more desirable as mentioned in the paper.
+-/

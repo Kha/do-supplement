@@ -73,15 +73,16 @@ example [LawfulMonad m] :
     xs.forM act
 := by induction xs <;> simp_all!
 
+def ex2 (f : β → α → m β) (init : β) (xs : List α) : m β := do'
+  let mut y := init;
+  for x in xs do' {
+    y ← f y x
+  };
+  return y
+
 example [LawfulMonad m] (f : β → α → m β) :
-    (do' let mut y := init;
-         for x in xs do' {
-           y ← f y x
-         };
-         return y)
-  =
-    xs.foldlM f init
-:= by induction xs generalizing init <;> simp_all!
+    ex2 f init xs = xs.foldlM f init := by
+  unfold ex2; induction xs generalizing init <;> simp_all!
 
 @[simp] theorem List.find?_cons {xs : List α} : (x::xs).find? p = if p x then some x else xs.find? p := by
   cases h : p x <;> simp_all!
@@ -125,26 +126,28 @@ theorem eq_findM [LawfulMonad m] :
         rw [List.findM?, ← ih]; simp
         apply byCases_Bool_bind <;> simp
 
+def ex3 [Monad m] (p : α → m Bool) (xss : List (List α)) : m (Option α) := do'
+  for xs in xss do' {
+    for x in xs do' {
+      let b ← p x;
+      if b then {
+        return some x
+      }
+    }
+  };
+  pure none
+
 theorem eq_findSomeM_findM [LawfulMonad m] (xss : List (List α)) :
-    (do' for xs in xss do' {
-           for x in xs do' {
-             let b ← p x;
-             if b then {
-               return some x
-             }
-           }
-         };
-         pure none)
-    =
-    xss.findSomeM? (fun xs => xs.findM? p)
-:= by induction xss with
-      | nil => simp!
-      | cons xs xss ih =>
-        simp [List.findSomeM?]
-        rw [← ih, ← eq_findM]
-        induction xs with
-        | nil => simp
-        | cons x xs ih => simp; apply byCases_Bool_bind <;> simp [ih]
+    ex3 p xss = xss.findSomeM? (fun xs => xs.findM? p) := by
+  unfold ex3
+  induction xss with
+  | nil => simp!
+  | cons xs xss ih =>
+    simp [List.findSomeM?]
+    rw [← ih, ← eq_findM]
+    induction xs with
+    | nil => simp
+    | cons x xs ih => simp; apply byCases_Bool_bind <;> simp [ih]
 
 def List.untilM (p : α → m Bool) : List α → m Unit
   | []    => pure ()
