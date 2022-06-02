@@ -1,7 +1,7 @@
 import Do.For  -- import `runCatch`
 import Lean
 
-/-|
+/-!
 ==========================================
 Formalization of Extended `do` Translation
 ==========================================
@@ -11,7 +11,7 @@ Functional Language".
 It contains an intrinsically typed representation of the paper's syntax of `do` statements as well
 of their translation functions and an equivalence proof thereof to a simple denotational semantics. -/
 
-/-|
+/-!
 Contexts
 --------
 
@@ -25,14 +25,14 @@ def HList : List (Type u) → Type u
 
 abbrev Assg Γ := HList Γ
 
-/-| Updating a heterogeneous list at a given, guaranteed in-bounds index. -/
+/-! Updating a heterogeneous list at a given, guaranteed in-bounds index. -/
 
 def HList.set : {αs : List (Type u)} → HList αs → (i : Fin αs.length) → αs.get i → HList αs
   | _ :: _, (a, as), ⟨0,          h⟩, b => (b, as)
   | _ :: _, (a, as), ⟨Nat.succ n, h⟩, b => (a, set as ⟨n, Nat.le_of_succ_le_succ h⟩ b)
   | [],     ⟨⟩,      _,               _ => ⟨⟩
 
-/-|
+/-!
 We write `∅` for empty contexts and assignments and `Γ ⊢ α` for the type of values of type `α` under the context `Γ`
 - that is, the function type from an assignment to `α`.
 -/
@@ -46,7 +46,7 @@ notation:30 Γ " ⊢ " α => Assg Γ → α
 def Assg.drop : Assg (α :: Γ) → Assg Γ
   | (a, as) => as
 
-/-| In one special case, we will need to manipulate contexts from the right, i.e. the outermost scope. -/
+/-! In one special case, we will need to manipulate contexts from the right, i.e. the outermost scope. -/
 
 def Assg.extendBot (x : α) : {Γ : _} → Assg Γ → Assg (Γ ++ [α])
   | [],     _       => (x, ⟨⟩)
@@ -56,7 +56,7 @@ def Assg.dropBot : {Γ : _} → Assg (Γ ++ [α]) → Assg Γ
   | [],     _       => ⟨⟩
   | _ :: _, (a, as) => (a, dropBot as)
 
-/-|
+/-!
 Intrinsically Typed Representation of `do` Statements
 -----------------------------------------------------
 
@@ -85,7 +85,7 @@ inductive Stmt (m : Type → Type u) (ω : Type) : (Γ Δ : List Type) → (b c 
   | sbreak : Stmt m ω Γ Δ true c α  -- break
   | scont : Stmt m ω Γ Δ b true α  -- continue
 
-/-| Neutral statements are a restriction of the above type. -/
+/-! Neutral statements are a restriction of the above type. -/
 
 inductive Neut (ω α : Type) : (b c : Bool) → Type _ where
   | val (a : α) : Neut ω α b c
@@ -93,19 +93,19 @@ inductive Neut (ω α : Type) : (b c : Bool) → Type _ where
   | rbreak : Neut ω α true c
   | rcont : Neut ω α b true
 
-/-| We elide `Neut.val` where unambiguous. -/
+/-! We elide `Neut.val` where unambiguous. -/
 
 instance : Coe α (Neut ω α b c) := ⟨Neut.val⟩
 instance : Coe (Id α) (Neut ω α b c) := ⟨Neut.val⟩
 
-/-|
+/-!
 We write `e[ρ][σ]` for the substitution of both contexts in `e`, a simple application in this encoding.
 `σ[x ↦ v]` updates `σ` at `v` (a de Bruijn index). -/
 
 macro:max (priority := high) e:term:max noWs "[" ρ:term "]" "[" σ:term "]" : term => `($e $ρ $σ)
 macro:max (priority := high) σ:term:max noWs "[" x:term " ↦ " v:term "]" : term => `(HList.set $σ $x $v)
 
-/-|
+/-!
 Dynamic Evaluation Function
 ---------------------------
 
@@ -151,7 +151,7 @@ termination_by
   eval s _ => (sizeOf s, 0)
   eval.go as => (sizeOf s, as.length)
 
-/-| At the top-level statement, the contexts are empty, no loop control flow statements are allowed, and the return and result type are identical. -/
+/-! At the top-level statement, the contexts are empty, no loop control flow statements are allowed, and the return and result type are identical. -/
 
 abbrev Do m α := Stmt m α ∅ ∅ false false α
 
@@ -162,7 +162,7 @@ def Do.eval [Monad m] (s : Do m α) : m α :=  -- corresponds to the reduction r
 
 notation "⟦" s "⟧" => Do.eval s
 
-/-|
+/-!
 Translation Functions
 =====================
 
@@ -180,11 +180,11 @@ The mutable context does not have to be adjusted. -/
   | sbreak => sbreak
   | scont => scont
 
-/-| Let us write `f ∘ₑ e` for the composition of `f : α → β` with `e : Γ ⊢ Δ ⊢ α`, which we will use to rewrite embedded terms. -/
+/-! Let us write `f ∘ₑ e` for the composition of `f : α → β` with `e : Γ ⊢ Δ ⊢ α`, which we will use to rewrite embedded terms. -/
 
 infixr:90 " ∘ₑ "  => fun f e => fun ρ σ => f e[ρ][σ]
 
-/-|
+/-!
 The formalization of `S` creates some technical hurdles. Because it operates on the outer-most mutable binding,
 we have to operate on that context from the right, from which we lose some helpful definitional equalities and
 have to rewrite types using nested proofs instead.
@@ -262,7 +262,7 @@ where
   | Stmt.ret e => Stmt.ret e
   | Stmt.sfor e s => Stmt.sfor e (L s)
 
-/-|
+/-!
 The remaining function to be translated is `D`, which is straightforward as well except for its termination proof,
 as it recurses on the results of `S` (D3) and `C ∘ B` (D5). Because of rules (S2, S9) that introduce new bindings,
 `S` may in fact increase the size of the input, and the same is true for `C` and `B` for the `sizeOf` function
@@ -331,11 +331,11 @@ macro "D_tac" : tactic =>
 termination_by _ s => (s.numExts, sizeOf s)
 decreasing_by D_tac
 
-/-| Finally we compose `D` and `R` into the translation rule for a top-level statement (1'). -/
+/-! Finally we compose `D` and `R` into the translation rule for a top-level statement (1'). -/
 
 def Do.trans [Monad m] (s : Do m α) : m α := runCatch (D (R s) ∅)
 
-/-|
+/-!
 Equivalence Proof
 -----------------
 
@@ -389,7 +389,7 @@ theorem eval_R [Monad m] [LawfulMonad m] (s : Stmt m ω Γ Δ b c α) : (R s).ev
       split <;> simp [ih']
   | _ => simp [*]
 
-/-|
+/-!
 We need one last helper function on context bottoms to be able to state the invariant of `S`, and then
 prove various lemmas about their interactions. -/
 
@@ -591,14 +591,14 @@ theorem D_eq [Monad m] [LawfulMonad m] : (s : Stmt m Empty Γ ∅ false false α
 termination_by _ s => (s.numExts, sizeOf s)
 decreasing_by D_tac
 
-/-| The equivalence proof cited in the paper follows from the invariants of `D` and `S`. -/
+/-! The equivalence proof cited in the paper follows from the invariants of `D` and `S`. -/
 
 theorem trans_eq_eval [Monad m] [LawfulMonad m] (s : Do m α) : Do.trans s = ⟦s⟧ := by
   simp [D_eq, eval_R, runCatch, Do.trans, Do.eval]
   apply bind_congr; intro
   split <;> simp
 
-/-|
+/-!
 Partial Evaluation
 ------------------
 
