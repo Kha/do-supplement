@@ -593,7 +593,8 @@ decreasing_by D_tac
 
 /-! The equivalence proof cited in the paper follows from the invariants of `D` and `S`. -/
 
-theorem trans_eq_eval [Monad m] [LawfulMonad m] (s : Do m α) : Do.trans s = ⟦s⟧ := by
+theorem Do.trans_eq_eval [Monad m] [LawfulMonad m] : ∀ s : Do m α, Do.trans s = ⟦s⟧ := by
+  intro s
   simp [D_eq, eval_R, runCatch, Do.trans, Do.eval]
   apply bind_congr; intro
   split <;> simp
