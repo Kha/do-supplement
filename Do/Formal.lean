@@ -23,38 +23,59 @@ def HList : List (Type u) → Type u
   | []      => PUnit
   | α :: αs => α × HList αs
 
+@[matchPattern] abbrev HList.nil : HList [] := ⟨⟩
+@[matchPattern] abbrev HList.cons (a : α) (as : HList αs) : HList (α :: αs) := (a, as)
+
+/-! We overload the common list notations `::` and `[e, ...]` for `HList`. -/
+
+infixr:67 " :: " => HList.cons
+
+syntax (name := hlistCons) "[" term,* "]" : term
+macro_rules (kind := hlistCons)
+  | `([])          => `(HList.nil)
+  | `([$x])        => `(HList.cons $x [])
+  | `([$x, $xs,*]) => `(HList.cons $x [$xs,*])
+
+/-!
+Lean's very general, heterogeneous definition of `++` causes some issues with our overloading above in terms
+such as `a ++ [b]`, so we restrict it to the `List` interpretation in the following, which is sufficient for our purposes.
+-/
+
+local macro_rules
+  | `($a ++ $b) => `(List.append $a $b)
+
 abbrev Assg Γ := HList Γ
 
 /-! Updating a heterogeneous list at a given, guaranteed in-bounds index. -/
 
 def HList.set : {αs : List (Type u)} → HList αs → (i : Fin αs.length) → αs.get i → HList αs
-  | _ :: _, (a, as), ⟨0,          h⟩, b => (b, as)
-  | _ :: _, (a, as), ⟨Nat.succ n, h⟩, b => (a, set as ⟨n, Nat.le_of_succ_le_succ h⟩ b)
-  | [],     ⟨⟩,      _,               _ => ⟨⟩
+  | _ :: _, a :: as, ⟨0,          h⟩, b => b :: as
+  | _ :: _, a :: as, ⟨Nat.succ n, h⟩, b => a :: set as ⟨n, Nat.le_of_succ_le_succ h⟩ b
+  | [],     [],      _,               _ => []
 
 /-!
 We write `∅` for empty contexts and assignments and `Γ ⊢ α` for the type of values of type `α` under the context `Γ`
 - that is, the function type from an assignment to `α`.
 -/
 instance : EmptyCollection (Assg ∅) where
-  emptyCollection := ⟨⟩
+  emptyCollection := []
 
 instance : CoeSort (List (Type u)) (Type u) := ⟨Assg⟩
 
 notation:30 Γ " ⊢ " α => Assg Γ → α
 
 def Assg.drop : Assg (α :: Γ) → Assg Γ
-  | (a, as) => as
+  | _ :: as => as
 
 /-! In one special case, we will need to manipulate contexts from the right, i.e. the outermost scope. -/
 
 def Assg.extendBot (x : α) : {Γ : _} → Assg Γ → Assg (Γ ++ [α])
-  | [],     _       => (x, ⟨⟩)
-  | _ :: _, (a, as) => (a, extendBot x as)
+  | [],     []      => [x]
+  | _ :: _, a :: as => a :: extendBot x as
 
 def Assg.dropBot : {Γ : _} → Assg (Γ ++ [α]) → Assg Γ
-  | [],     _       => ⟨⟩
-  | _ :: _, (a, as) => (a, dropBot as)
+  | [],     _       => []
+  | _ :: _, a :: as => a :: dropBot as
 
 /-!
 Intrinsically Typed Representation of `do` Statements
@@ -111,7 +132,7 @@ Dynamic Evaluation Function
 
 A direct encoding of the paper's operational semantics as a denotational function,
 generalized over an arbitrary monad.
-Note that the immutable context `ρ` is accumulated (`(v, ρ)`) and passed explicitly instead of immutable
+Note that the immutable context `ρ` is accumulated (`v :: ρ`) and passed explicitly instead of immutable
 bindings being substituted immediately as that is a better match for the above definition of `Stmt`.
 Iteration over the values of the given list in the `for` case introduces a nested, mutually recursive helper
 function, with termination of the mutual bundle following from a size argument over the statement primarily
@@ -128,7 +149,7 @@ and the length of the list in the `for` case secondarily.
       | ⟨Neut.ret o, σ'⟩ => pure ⟨Neut.ret o, σ'⟩
       | ⟨Neut.rbreak, σ'⟩ => pure ⟨Neut.rbreak, σ'⟩
       | ⟨Neut.rcont, σ'⟩ => pure ⟨Neut.rcont, σ'⟩
-    s.eval ρ σ >>= cont (fun v σ' => s'.eval (v, ρ) σ')
+    s.eval ρ σ >>= cont (fun v σ' => s'.eval (v :: ρ) σ')
   | letmut e s, σ =>
     s.eval ρ (e[ρ][σ], σ) >>= fun ⟨r, σ'⟩ => pure ⟨r, σ'.drop⟩
   -- `x` is a valid de Bruijn index into `σ` by definition of `assg`
@@ -139,7 +160,7 @@ and the length of the list in the `for` case secondarily.
     let rec go σ
       | [] => pure ⟨(), σ⟩
       | a::as =>
-        s.eval (a, ρ) σ >>= fun
+        s.eval (a :: ρ) σ >>= fun
         | ⟨(), σ'⟩ => go σ' as
         | ⟨Neut.rcont, σ'⟩ => go σ' as
         | ⟨Neut.rbreak, σ'⟩ => pure ⟨(), σ'⟩
@@ -171,12 +192,12 @@ The mutable context does not have to be adjusted. -/
 
 @[simp] def Stmt.mapAssg (f : Assg Γ' → Assg Γ) : Stmt m ω Γ Δ b c β → Stmt m ω Γ' Δ b c β
   | expr e => expr (e ∘ f)
-  | bind s₁ s₂ => bind (s₁.mapAssg f) (s₂.mapAssg (fun (a, as) => (a, f as)))
+  | bind s₁ s₂ => bind (s₁.mapAssg f) (s₂.mapAssg (fun (a :: as) => (a :: f as)))
   | letmut e s => letmut (e ∘ f) (s.mapAssg f)
   | assg x e => assg x (e ∘ f)
   | ite e s₁ s₂ => ite (e ∘ f) (s₁.mapAssg f) (s₂.mapAssg f)
   | ret e => ret (e ∘ f)
-  | sfor e s => sfor (e ∘ f) (s.mapAssg (fun (a, as) => (a, f as)))
+  | sfor e s => sfor (e ∘ f) (s.mapAssg (fun (a :: as) => (a :: f as)))
   | sbreak => sbreak
   | scont => scont
 
@@ -205,7 +226,7 @@ The given branches correspond, in this order, to rules (S1) to (S11). The analog
   | Stmt.letmut e s => Stmt.letmut (unmut e) (S s)
   | Stmt.assg x e =>
     if h : x < Δ.length then
-      Stmt.assg ⟨x, h⟩ (fun (y, ρ) σ => List.get_append_left .. ▸ e ρ (Assg.extendBot y σ))
+      Stmt.assg ⟨x, h⟩ (fun (y :: ρ) σ => List.get_append_left .. ▸ e ρ (Assg.extendBot y σ))
     else
       Stmt.expr (set (σ := α) ∘ₑ cast (List.get_last h) ∘ₑ unmut e)
   | Stmt.ite e s₁ s₂ => Stmt.ite (unmut e) (S s₁) (S s₂)
@@ -215,9 +236,9 @@ The given branches correspond, in this order, to rules (S1) to (S11). The analog
   | Stmt.sfor e s => Stmt.sfor (unmut e) (Stmt.bind (Stmt.expr (fun _ _ => get)) (Stmt.mapAssg shadowSnd (S s)))
 where
   @[simp] unmut {β} (e : Γ ⊢ Δ ++ [α] ⊢ β) : α :: Γ ⊢ Δ ⊢ β
-    | (y, ρ), σ => e ρ (Assg.extendBot y σ)
+    | y :: ρ, σ => e ρ (Assg.extendBot y σ)
   @[simp] shadowSnd {β} : Assg (α :: β :: α :: Γ) → Assg (α :: β :: Γ)
-    | (a', b, a, ρ) => (a', b, ρ)
+    | a' :: b :: a :: ρ => a' :: b :: ρ
 
 @[simp] def R [Monad m] : Stmt m ω Γ Δ b c α → Stmt (ExceptT ω m) Empty Γ Δ b c α
   | Stmt.ret e => Stmt.expr (throw ∘ₑ e)
@@ -316,17 +337,17 @@ macro "D_tac" : tactic =>
 
 @[simp] def D [Monad m] : Stmt m Empty Γ ∅ false false α → (Γ ⊢ m α)
   | Stmt.expr e => (e[·][∅])
-  | Stmt.bind s s' => (fun ρ => D s ρ >>= fun x => D s' (x, ρ))
+  | Stmt.bind s s' => (fun ρ => D s ρ >>= fun x => D s' (x :: ρ))
   | Stmt.letmut e s =>
     have := Nat.lt_succ_of_le <| Stmt.numExts_S (Δ := []) s  -- for termination
     fun ρ =>
       let x := e[ρ][∅]
-      StateT.run' (D (S s) (x, ρ)) x
+      StateT.run' (D (S s) (x :: ρ)) x
   | Stmt.ite e s₁ s₂ => (fun ρ => if e[ρ][∅] then D s₁ ρ else D s₂ ρ)
   | Stmt.sfor e s =>
     have := Nat.lt_succ_of_le <| Stmt.numExts_C_B (Δ := []) s  -- for termination
     fun ρ =>
-      runCatch (forM e[ρ][∅] (fun x => runCatch (D (C (B s)) (x, ρ))))
+      runCatch (forM e[ρ][∅] (fun x => runCatch (D (C (B s)) (x :: ρ))))
   | Stmt.ret e => (nomatch e[·][∅])
 termination_by _ s => (s.numExts, sizeOf s)
 decreasing_by D_tac
@@ -360,7 +381,7 @@ theorem eval_R [Monad m] [LawfulMonad m] (s : Stmt m ω Γ Δ b c α) : (R s).ev
     split <;> simp [ih₂]
   | letmut _ _ ih =>
     simp [ExceptT.run_bind, ih]
-    apply bind_congr; intro ⟨r, (_, σ')⟩
+    apply bind_congr; intro ⟨r, (_ :: σ')⟩
     cases r <;> simp
   | ite e _ _ ih₁ ih₂ =>
     by_cases h : e ρ σ <;> simp [ExceptT.run_bind, h, ih₁, ih₂]
@@ -394,8 +415,8 @@ We need one last helper function on context bottoms to be able to state the inva
 prove various lemmas about their interactions. -/
 
 def Assg.bot : {Γ : _} → Assg (Γ ++ [α]) → α
-  | [],     (a, ()) => a
-  | _ :: _, (_, as) => bot as
+  | [],     [a]     => a
+  | _ :: _, _ :: as => bot as
 
 @[simp] theorem Assg.dropBot_extendBot (a : α) (σ : Assg Γ) : Assg.dropBot (Assg.extendBot a σ) = σ := by
   induction Γ <;> cases σ <;> simp [dropBot, extendBot, *]
@@ -453,8 +474,8 @@ def Assg.bot : {Γ : _} → Assg (Γ ++ [α]) → α
       · intro h''
         apply False.elim (h (Nat.succ_lt_succ h''))
 
-theorem eval_S [Monad m] [LawfulMonad m] : ∀ (s : Stmt m ω Γ (Δ ++ [α]) b c β), StateT.run ((S s).eval (a, ρ) σ) a = s.eval ρ (Assg.extendBot a σ) >>= fun
-    | (r, σ) => pure ((r, Assg.dropBot σ), Assg.bot σ)
+theorem eval_S [Monad m] [LawfulMonad m] : ∀ (s : Stmt m ω Γ (Δ ++ [α]) b c β), StateT.run ((S s).eval (a :: ρ) σ) a = s.eval ρ (Assg.extendBot a σ) >>= fun
+    | r :: σ => pure ((r :: Assg.dropBot σ), Assg.bot σ)
   | Stmt.expr e => by simp
   | Stmt.bind s₁ s₂ => by
     simp [eval_S s₁, Stmt.eval.cont]
@@ -470,7 +491,7 @@ theorem eval_S [Monad m] [LawfulMonad m] : ∀ (s : Stmt m ω Γ (Δ ++ [α]) b 
     simp only [S, Stmt.eval, S.unmut]
     generalize h : a = a'
     conv =>
-      pattern (a', _)
+      pattern HList.cons a' _
       rw [← h]
     clear h
     induction e ρ _ generalizing σ a' with
@@ -638,10 +659,11 @@ def ex2' [Monad m] (f : β → α → m β) (init : β) (xs : List α) : m β :=
       Stmt.letmut (fun _ _ => init) <|
       Stmt.bind (
         Stmt.sfor (fun _ _ => xs) <|
+        -- `y ← f y x` unfolded to `let z ← f y x; y := z` (A4)
         Stmt.bind
-          (Stmt.expr (fun (x, _) (y, _) => f y x))
-          (Stmt.assg ⟨0, by simp⟩ (fun (z, _) _ => z))) <|
-      Stmt.ret (fun _ (y, _) => y))
+          (Stmt.expr (fun ([x]) ([y]) => f y x))
+          (Stmt.assg ⟨0, by simp⟩ (fun ([z, x]) _ => z))) <|
+      Stmt.ret (fun _ ([y]) => y))
 
 /-!
 Compare the output of the two versions - the structure is identical except for unused
@@ -676,11 +698,11 @@ def ex3' [Monad m] (p : α → m Bool) (xss : List (List α)) : m (Option α) :=
   simp [Do.trans] in Do.trans (
       Stmt.bind
         (Stmt.sfor (fun _ _ => xss) <|
-          Stmt.sfor (fun (xs, _) _ => xs) <|
+          Stmt.sfor (fun ([xs]) _ => xs) <|
             Stmt.bind
-              (Stmt.expr (fun (x, _) _ => p x))
-              (Stmt.ite (fun (b, _) _ => b)
-                (Stmt.ret (fun (_, x, _) _ => some x))
+              (Stmt.expr (fun ([x, xs]) _ => p x))
+              (Stmt.ite (fun ([b, x, xs]) _ => b)
+                (Stmt.ret (fun ([b, x, xs]) _ => some x))
                 (Stmt.expr (fun _ _ => pure ()))))
         (Stmt.expr (fun _ _ => pure none)))
 
