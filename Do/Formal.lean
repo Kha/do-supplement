@@ -217,23 +217,22 @@ respective rule, followed by the `y` of the outer scope. We encode the shadowing
 third element from the context as well as the assignment. We are in fact forced to do so because the corresponding
 branches of `S` would not otherwise typecheck. The only mistake we could still make is to drop the wrong `α` value
 from the assignment, which (speaking from experience) would eventually be caught by the correctness proof.
-
-The given branches correspond, in this order, to rules (S1) to (S11). The analogous is true for the translation rules below.
 -/
 @[simp] def S [Monad m] : Stmt m ω Γ (Δ ++ [α]) b c β → Stmt (StateT α m) ω (α :: Γ) Δ b c β
-  | Stmt.expr e => Stmt.expr (StateT.lift ∘ₑ unmut e)
-  | Stmt.bind s₁ s₂ => Stmt.bind (S s₁) (Stmt.bind (Stmt.expr (fun _ _ => get)) (Stmt.mapAssg shadowSnd (S s₂)))
-  | Stmt.letmut e s => Stmt.letmut (unmut e) (S s)
-  | Stmt.assg x e =>
-    if h : x < Δ.length then
-      Stmt.assg ⟨x, h⟩ (fun (y :: ρ) σ => List.get_append_left .. ▸ e ρ (Assg.extendBot y σ))
-    else
-      Stmt.expr (set (σ := α) ∘ₑ cast (List.get_last h) ∘ₑ unmut e)
-  | Stmt.ite e s₁ s₂ => Stmt.ite (unmut e) (S s₁) (S s₂)
-  | Stmt.ret e => Stmt.ret (unmut e)
-  | Stmt.sbreak => Stmt.sbreak
-  | Stmt.scont => Stmt.scont
-  | Stmt.sfor e s => Stmt.sfor (unmut e) (Stmt.bind (Stmt.expr (fun _ _ => get)) (Stmt.mapAssg shadowSnd (S s)))
+/-(S1)-/ | Stmt.expr e => Stmt.expr (StateT.lift ∘ₑ unmut e)
+/-(S2)-/ | Stmt.bind s₁ s₂ => Stmt.bind (S s₁) (Stmt.bind (Stmt.expr (fun _ _ => get)) (Stmt.mapAssg shadowSnd (S s₂)))
+/-(S3)-/ | Stmt.letmut e s => Stmt.letmut (unmut e) (S s)
+         | Stmt.assg x e =>
+           if h : x < Δ.length then
+/-(S4)-/     Stmt.assg ⟨x, h⟩ (fun (y :: ρ) σ => List.get_append_left .. ▸ e ρ (Assg.extendBot y σ))
+           else
+/-(S5)-/     Stmt.expr (set (σ := α) ∘ₑ cast (List.get_last h) ∘ₑ unmut e)
+/-(S6)-/ | Stmt.ite e s₁ s₂ => Stmt.ite (unmut e) (S s₁) (S s₂)
+         -- unreachable case; could be eliminated by a more precise specification of `ω`, but the benefit would be minimal
+         | Stmt.ret e => Stmt.ret (unmut e)
+/-(S7)-/ | Stmt.sbreak => Stmt.sbreak
+/-(S8)-/ | Stmt.scont => Stmt.scont
+/-(S9)-/ | Stmt.sfor e s => Stmt.sfor (unmut e) (Stmt.bind (Stmt.expr (fun _ _ => get)) (Stmt.mapAssg shadowSnd (S s)))
 where
   @[simp] unmut {β} (e : Γ ⊢ Δ ++ [α] ⊢ β) : α :: Γ ⊢ Δ ⊢ β
     | y :: ρ, σ => e ρ (Assg.extendBot y σ)
@@ -241,38 +240,39 @@ where
     | a' :: b :: a :: ρ => a' :: b :: ρ
 
 @[simp] def R [Monad m] : Stmt m ω Γ Δ b c α → Stmt (ExceptT ω m) Empty Γ Δ b c α
-  | Stmt.ret e => Stmt.expr (throw ∘ₑ e)
-  | Stmt.expr e => Stmt.expr (ExceptT.lift ∘ₑ e)
-  | Stmt.bind s s' => Stmt.bind (R s) (R s')
-  | Stmt.letmut e s => Stmt.letmut e (R s)
-  | Stmt.assg x e => Stmt.assg x e
-  | Stmt.ite e s₁ s₂ => Stmt.ite e (R s₁) (R s₂)
-  | Stmt.sbreak => Stmt.sbreak
-  | Stmt.scont => Stmt.scont
-  | Stmt.sfor e s => Stmt.sfor e (R s)
+/-(R1)-/ | Stmt.ret e => Stmt.expr (throw ∘ₑ e)
+/-(R2)-/ | Stmt.expr e => Stmt.expr (ExceptT.lift ∘ₑ e)
+/-(R3)-/ | Stmt.bind s s' => Stmt.bind (R s) (R s')
+/-(R4)-/ | Stmt.letmut e s => Stmt.letmut e (R s)
+/-(R5)-/ | Stmt.assg x e => Stmt.assg x e
+/-(R6)-/ | Stmt.ite e s₁ s₂ => Stmt.ite e (R s₁) (R s₂)
+/-(R7)-/ | Stmt.sbreak => Stmt.sbreak
+/-(R8)-/ | Stmt.scont => Stmt.scont
+/-(R9)-/ | Stmt.sfor e s => Stmt.sfor e (R s)
 
 @[simp] def L [Monad m] : Stmt m ω Γ Δ b c α → Stmt (ExceptT Unit m) ω Γ Δ b c α
-  | Stmt.sbreak => Stmt.sbreak
-  | Stmt.scont => Stmt.scont
-  | Stmt.expr e => Stmt.expr (ExceptT.lift ∘ₑ e)
-  | Stmt.bind s s' => Stmt.bind (L s) (L s')
-  | Stmt.letmut e s => Stmt.letmut e (L s)
-  | Stmt.assg x e => Stmt.assg x e
-  | Stmt.ite e s₁ s₂ => Stmt.ite e (L s₁) (L s₂)
-  | Stmt.ret e => Stmt.ret e
-  | Stmt.sfor e s => Stmt.sfor e (L s)
+/-(L1)-/ | Stmt.sbreak => Stmt.sbreak
+/-(L2)-/ | Stmt.scont => Stmt.scont
+/-(L3)-/ | Stmt.expr e => Stmt.expr (ExceptT.lift ∘ₑ e)
+/-(L4)-/ | Stmt.bind s s' => Stmt.bind (L s) (L s')
+/-(L5)-/ | Stmt.letmut e s => Stmt.letmut e (L s)
+/-(L6)-/ | Stmt.assg x e => Stmt.assg x e
+/-(L7)-/ | Stmt.ite e s₁ s₂ => Stmt.ite e (L s₁) (L s₂)
+         | Stmt.ret e => Stmt.ret e
+/-(L8)-/ | Stmt.sfor e s => Stmt.sfor e (L s)
 
 @[simp] def B [Monad m] : Stmt m ω Γ Δ b c α → Stmt (ExceptT Unit m) ω Γ Δ false c α
-  | Stmt.sbreak => Stmt.expr (fun ρ σ => throw ())
-  | Stmt.scont => Stmt.scont
-  | Stmt.expr e => Stmt.expr (ExceptT.lift ∘ₑ e)
-  | Stmt.bind s s' => Stmt.bind (B s) (B s')
-  | Stmt.letmut e s => Stmt.letmut e (B s)
-  | Stmt.assg x e => Stmt.assg x e
-  | Stmt.ite e s₁ s₂ => Stmt.ite e (B s₁) (B s₂)
-  | Stmt.ret e => Stmt.ret e
-  | Stmt.sfor e s => Stmt.sfor e (L s)
+/-(B1)-/ | Stmt.sbreak => Stmt.expr (fun ρ σ => throw ())
+/-(B2)-/ | Stmt.scont => Stmt.scont
+/-(B3)-/ | Stmt.expr e => Stmt.expr (ExceptT.lift ∘ₑ e)
+/-(B4)-/ | Stmt.bind s s' => Stmt.bind (B s) (B s')
+/-(B5)-/ | Stmt.letmut e s => Stmt.letmut e (B s)
+/-(B6)-/ | Stmt.assg x e => Stmt.assg x e
+/-(B7)-/ | Stmt.ite e s₁ s₂ => Stmt.ite e (B s₁) (B s₂)
+         | Stmt.ret e => Stmt.ret e
+/-(B8)-/ | Stmt.sfor e s => Stmt.sfor e (L s)
 
+-- (elided in the paper)
 @[simp] def C [Monad m] : Stmt m ω Γ Δ false c α → Stmt (ExceptT Unit m) ω Γ Δ false false α
   | Stmt.scont => Stmt.expr (fun ρ σ => throw ())
   | Stmt.expr e => Stmt.expr (ExceptT.lift ∘ₑ e)
