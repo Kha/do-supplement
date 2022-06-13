@@ -126,7 +126,7 @@ example :
     (if b then discard ma else pure ())
 := rfl
 
-example [LawfulMonad m] :
+theorem simple [LawfulMonad m] :
     (do' let mut x ← ma;
          if b then {
            x ← ma'
