@@ -15,5 +15,4 @@ SRC=$(shell find Do -name '*.lean')
 html: $(patsubst %.lean,%.html,$(SRC))
 
 clean:
-	rm -rf build/
-	find . -name '*.html' -delete
+	rm -rf build/ Do/*.html
