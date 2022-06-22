@@ -1,0 +1,6 @@
+[submodule "LeanInk"]
+	path = LeanInk
+	url = https://github.com/leanprover/LeanInk.git
+[submodule "alectryon"]
+	path = alectryon
+	url = https://github.com/Kha/alectryon.git

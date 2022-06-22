@@ -30,3 +30,12 @@ $ export PATH=$PATH:~/Downloads/lean-4.0.0-linux/bin
   It is very important that `lean` is in the search path of VS Code and that the supplement folder is opened as a workspace, which this command should ensure.
 * Open the Extensions tab (`Ctrl+Shift+X`) and install the `lean4` extension (author: `leanprover`).
 * You should now have working error diagnostics, go-to-definition, as well as a goal display for tactic proofs in the supplement files!
+
+## Regenerating the HTML output
+
+The versions of [Alectryon](https://github.com/cpitclaudel/alectryon) and its Lean 4 backend [LeanInk](https://github.com/leanprover/LeanInk) used to generate the accompanying HTML files are archived in the folders `alectryon` and `LeanInk`, respectively.
+To regenerate the output, first install the local Alectryon version as described in its readme:
+``` bash
+python3 -m pip install ./alectryon
+```
+After ensuring that `alectryon` is now in your `PATH`, running `make html` (optionally preceded by `make clean`) should regenerate the files.

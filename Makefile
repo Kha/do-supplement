@@ -1,15 +1,18 @@
-.PHONY: all lean alectryon clean
+.PHONY: all lean LeanInk html clean
 
 all: lean
 
 lean:
 	lake build
 
-%.html: %.lean
-	PATH=$$PATH:$$PWD/../LeanInk/build/bin ../alectryon/alectryon.py --frontend lean4+rst $< -o $@ --lake lakefile.lean
+LeanInk:
+	cd LeanInk; lake build
 
-SRC=$(shell find . -name '*.lean')
-alectryon: $(patsubst %.lean,%.html,$(SRC))
+%.html: %.lean | LeanInk
+	PATH=$$PATH:$$PWD/LeanInk/build/bin alectryon --frontend lean4+rst $< -o $@ --lake lakefile.lean
+
+SRC=$(shell find Do -name '*.lean')
+html: $(patsubst %.lean,%.html,$(SRC))
 
 clean:
 	rm -rf build/
