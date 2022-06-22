@@ -632,10 +632,13 @@ open Lean.Parser.Tactic in
 open Lean.Meta in
 open Lean.Elab in
 elab "simp" "[" simps:simpLemma,* "]" "in" e:term : term => do
+  -- construct goal `⊢ e = ?x` with fresh metavariable `?x`, simplify, solve by reflexivity,
+  -- and return assigned value of `?x`
   let e ← Term.elabTermAndSynthesize e none
   let x ← mkFreshExprMVar (← inferType e)
   let goal ← mkFreshExprMVar (← mkEq e x)
-  Term.runTactic goal.mvarId! (← `(tactic| (simp [$simps,*]; rfl)))
+  -- disable ζ-reduction to preserve `let`s
+  Term.runTactic goal.mvarId! (← `(tactic| (simp (config := { zeta := false }) [$simps,*]; rfl)))
   instantiateMVars x
 
 -- further clean up generated programs
