@@ -24,8 +24,8 @@ syntax "return" : expander
 macro_rules
   | `(do' $s) => do  -- (1')
     -- optimization: fall back to original rule (1) if now `return` statement was expanded
-    let s' ← expandMacros (← `(stmt|expand! return in $s))
-    if s'.count (· matches `(stmt|return $e)) == s.count (· matches `(stmt|return $e)) then
+    let s' ← expandStmt (← `(stmt|expand! return in $s))
+    if s'.raw.count (· matches `(stmt|return $_)) == s.raw.count (· matches `(stmt|return $_)) then
       `(d! $s)
     else
       `(ExceptCpsT.runCatch (d! $s'))

@@ -49,7 +49,7 @@ abbrev Assg Γ := HList Γ
 /-! Updating a heterogeneous list at a given, guaranteed in-bounds index. -/
 
 def HList.set : {αs : List (Type u)} → HList αs → (i : Fin αs.length) → αs.get i → HList αs
-  | _ :: _, a :: as, ⟨0,          h⟩, b => b :: as
+  | _ :: _, _ :: as, ⟨0,          _⟩, b => b :: as
   | _ :: _, a :: as, ⟨Nat.succ n, h⟩, b => a :: set as ⟨n, Nat.le_of_succ_le_succ h⟩ b
   | [],     [],      _,               _ => []
 
@@ -237,7 +237,7 @@ where
   @[simp] unmut {β} (e : Γ ⊢ Δ ++ [α] ⊢ β) : α :: Γ ⊢ Δ ⊢ β
     | y :: ρ, σ => e ρ (Assg.extendBot y σ)
   @[simp] shadowSnd {β} : Assg (α :: β :: α :: Γ) → Assg (α :: β :: Γ)
-    | a' :: b :: a :: ρ => a' :: b :: ρ
+    | a' :: b :: _ :: ρ => a' :: b :: ρ
 
 @[simp] def R [Monad m] : Stmt m ω Γ Δ b c α → Stmt (ExceptT ω m) Empty Γ Δ b c α
 /-(R1)-/ | Stmt.ret e => Stmt.expr (throw ∘ₑ e)
@@ -262,7 +262,7 @@ where
 /-(L8)-/ | Stmt.sfor e s => Stmt.sfor e (L s)
 
 @[simp] def B [Monad m] : Stmt m ω Γ Δ b c α → Stmt (ExceptT Unit m) ω Γ Δ false c α
-/-(B1)-/ | Stmt.sbreak => Stmt.expr (fun ρ σ => throw ())
+/-(B1)-/ | Stmt.sbreak => Stmt.expr (fun _ _ => throw ())
 /-(B2)-/ | Stmt.scont => Stmt.scont
 /-(B3)-/ | Stmt.expr e => Stmt.expr (ExceptT.lift ∘ₑ e)
 /-(B4)-/ | Stmt.bind s s' => Stmt.bind (B s) (B s')
@@ -274,7 +274,7 @@ where
 
 -- (elided in the paper)
 @[simp] def C [Monad m] : Stmt m ω Γ Δ false c α → Stmt (ExceptT Unit m) ω Γ Δ false false α
-  | Stmt.scont => Stmt.expr (fun ρ σ => throw ())
+  | Stmt.scont => Stmt.expr (fun _ _ => throw ())
   | Stmt.expr e => Stmt.expr (ExceptT.lift ∘ₑ e)
   | Stmt.bind s s' => Stmt.bind (C s) (C s')
   | Stmt.letmut e s => Stmt.letmut e (C s)
@@ -294,13 +294,13 @@ the number of special statements decreases in each case, or it remains the same 
 -/
 
 @[simp] def Stmt.numExts : Stmt m ω Γ Δ b c α → Nat
-  | expr e => 0
+  | expr _ => 0
   | bind s₁ s₂ => s₁.numExts + s₂.numExts
-  | letmut e s => s.numExts + 1
-  | assg x e => 1
-  | ite e s₁ s₂ => s₁.numExts + s₂.numExts
-  | ret e => 1
-  | sfor e s => s.numExts + 1
+  | letmut _ s => s.numExts + 1
+  | assg _ _ => 1
+  | ite _ s₁ s₂ => s₁.numExts + s₂.numExts
+  | ret _ => 1
+  | sfor _ s => s.numExts + 1
   | sbreak => 1
   | scont => 1
 
@@ -432,7 +432,7 @@ def Assg.bot : {Γ : _} → Assg (Γ ++ [α]) → α
     cases σ
     have ⟨i, h'⟩ := i
     cases i <;> simp [HList.set, dropBot]
-    rw [ih]; rfl
+    rw [ih]
 
 @[simp] theorem Assg.bot_set_extendBot_init (a : α) (σ : Assg Γ) (h : i.1 < Γ.length) {b} : Assg.bot ((Assg.extendBot a σ).set i b) = a := by
   induction Γ with
@@ -470,9 +470,8 @@ def Assg.bot : {Γ : _} → Assg (Γ ++ [α]) → α
     · apply False.elim (h (Nat.zero_lt_succ _))
     · simp [bot]
       rw [ih]
-      · rfl
-      · intro h''
-        apply False.elim (h (Nat.succ_lt_succ h''))
+      intro h''
+      apply False.elim (h (Nat.succ_lt_succ h''))
 
 theorem eval_S [Monad m] [LawfulMonad m] : ∀ (s : Stmt m ω Γ (Δ ++ [α]) b c β), StateT.run ((S s).eval (a :: ρ) σ) a = s.eval ρ (Assg.extendBot a σ) >>= fun
     | r :: σ => pure ((r :: Assg.dropBot σ), Assg.bot σ)
@@ -628,6 +627,7 @@ We define a new term notation `simp [...] in e` that rewrites the term e using t
 simplification theorems.
 -/
 
+open Lean in
 open Lean.Parser.Tactic in
 open Lean.Meta in
 open Lean.Elab in
@@ -638,7 +638,7 @@ elab "simp" "[" simps:simpLemma,* "]" "in" e:term : term => do
   let x ← mkFreshExprMVar (← inferType e)
   let goal ← mkFreshExprMVar (← mkEq e x)
   -- disable ζ-reduction to preserve `let`s
-  Term.runTactic goal.mvarId! (← `(tactic| (simp (config := { zeta := false }) [$simps,*]; rfl)))
+  Term.runTactic goal.mvarId! (← `(tactic| (simp (config := { zeta := false }) [$simps:simpLemma,*]; rfl)))
   instantiateMVars x
 
 -- further clean up generated programs
