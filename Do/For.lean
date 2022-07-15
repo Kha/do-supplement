@@ -17,19 +17,19 @@ syntax "continue" : expander
 syntax "lift" : expander
 
 macro_rules
-  | `(stmt|expand! $_   in break) => `(stmt|break)                                              -- subsumes (S7, R7, B2, L1)
-  | `(stmt|expand! $_   in continue) => `(stmt|continue)                                        -- subsumes (S8, R8, L2)
-  | `(stmt|expand! $exp in for $x in $e do' $s) => `(stmt|for $x in $e do' expand! $exp in $s)  -- subsumes (L8, R9)
+  | `(stmt| expand! $_   in break) => `(stmt| break)                                              -- subsumes (S7, R7, B2, L1)
+  | `(stmt| expand! $_   in continue) => `(stmt| continue)                                        -- subsumes (S8, R8, L2)
+  | `(stmt| expand! $exp in for $x in $e do' $s) => `(stmt| for $x in $e do' expand! $exp in $s)  -- subsumes (L8, R9)
 
 macro_rules
   | `(d! for $x in $e do' $s) => do  -- (D5), optimized like (1')
     let mut s := s
-    let sb ← expandStmt (← `(stmt|expand! break in $s))
-    let hasBreak := sb.raw.count (· matches `(stmt|break)) < s.raw.count (· matches `(stmt|break))
+    let sb ← expandStmt (← `(stmt| expand! break in $s))
+    let hasBreak := sb.raw.count (· matches `(stmt| break)) < s.raw.count (· matches `(stmt| break))
     if hasBreak then
       s := sb
-    let sc ← expandStmt (← `(stmt|expand! continue in $s))
-    let hasContinue := sc.raw.count (· matches `(stmt|continue)) < s.raw.count (· matches `(stmt|continue))
+    let sc ← expandStmt (← `(stmt| expand! continue in $s))
+    let hasContinue := sc.raw.count (· matches `(stmt| continue)) < s.raw.count (· matches `(stmt| continue))
     if hasContinue then
       s := sc
     let mut body ← `(d! $s)
@@ -45,18 +45,18 @@ macro_rules
     throw <| Macro.Exception.error c "unexpected 'continue' outside loop"
 
 macro_rules
-  | `(stmt|expand! break in break) => `(stmt|throw ())                                           -- (B1)
-  | `(stmt|expand! break in $e:term) => `(stmt|ExceptCpsT.lift $e)                               -- (B3)
-  | `(stmt|expand! break in for $x in $e do' $s) => `(stmt|for $x in $e do' expand! lift in $s)  -- (B8)
-  | `(stmt|expand! continue in continue) => `(stmt|throw ())
-  | `(stmt|expand! continue in $e:term) => `(stmt|ExceptCpsT.lift $e)
-  | `(stmt|expand! continue in for $x in $e do' $s) => `(stmt|for $x in $e do' expand! lift in $s)
+  | `(stmt| expand! break in break) => `(stmt| throw ())                                           -- (B1)
+  | `(stmt| expand! break in $e:term) => `(stmt| ExceptCpsT.lift $e)                               -- (B3)
+  | `(stmt| expand! break in for $x in $e do' $s) => `(stmt| for $x in $e do' expand! lift in $s)  -- (B8)
+  | `(stmt| expand! continue in continue) => `(stmt| throw ())
+  | `(stmt| expand! continue in $e:term) => `(stmt| ExceptCpsT.lift $e)
+  | `(stmt| expand! continue in for $x in $e do' $s) => `(stmt| for $x in $e do' expand! lift in $s)
 
 macro_rules
-  | `(stmt|expand! lift in $e:term) => `(stmt|ExceptCpsT.lift $e)  -- (L3)
+  | `(stmt| expand! lift in $e:term) => `(stmt| ExceptCpsT.lift $e)  -- (L3)
 
 macro_rules
-  | `(stmt|expand! mut $y in for $x in $e do' $s) => `(stmt|for $x in $e do' { let $y ← get; expand! mut $y in $s })  -- (S9)
+  | `(stmt| expand! mut $y in for $x in $e do' $s) => `(stmt| for $x in $e do' { let $y ← get; expand! mut $y in $s })  -- (S9)
 
 variable [Monad m]
 variable (ma ma' : m α)

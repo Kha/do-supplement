@@ -24,15 +24,15 @@ syntax "return" : expander
 macro_rules
   | `(do' $s) => do  -- (1')
     -- optimization: fall back to original rule (1) if now `return` statement was expanded
-    let s' ← expandStmt (← `(stmt|expand! return in $s))
-    if s'.raw.count (· matches `(stmt|return $_)) == s.raw.count (· matches `(stmt|return $_)) then
+    let s' ← expandStmt (← `(stmt| expand! return in $s))
+    if s'.raw.count (· matches `(stmt| return $_)) == s.raw.count (· matches `(stmt| return $_)) then
       `(d! $s)
     else
       `(ExceptCpsT.runCatch (d! $s'))
 
 macro_rules
-  | `(stmt|expand! return in return $e) => `(stmt|throw $e)          -- (R1)
-  | `(stmt|expand! return in $e:term) => `(stmt|ExceptCpsT.lift $e)  -- (R2)
+  | `(stmt| expand! return in return $e) => `(stmt| throw $e)          -- (R1)
+  | `(stmt| expand! return in $e:term) => `(stmt| ExceptCpsT.lift $e)  -- (R2)
 
 variable [Monad m]
 variable (ma ma' : m α)

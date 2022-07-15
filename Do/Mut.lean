@@ -20,13 +20,13 @@ syntax "mut" ident : expander  -- corresponds to `S_y`
 
 -- generic traversal rules
 macro_rules
-  | `(stmt|expand! $exp in let $x ← $s; $s') => `(stmt|let $x ← expand! $exp in $s; expand! $exp in $s')                -- subsumes (R3, B4, L4)
-  | `(stmt|expand! $exp in let mut $x := $e; $s') => `(stmt|let mut $x := $e; expand! $exp in $s')                      -- subsumes (R4, B5, L5)
-  | `(stmt|expand! $_ in $x:ident := $e) => `(stmt|$x:ident := $e)                                                      -- subsumes (R5, B6, L6)
-  | `(stmt|expand! $exp in if $e then $s₁ else $s₂) => `(stmt|if $e then expand! $exp in $s₁ else expand! $exp in $s₂)  -- subsumes (S6, R6, B7, L7)
-  | `(stmt|expand! $exp in $s) => do
+  | `(stmt| expand! $exp in let $x ← $s; $s') => `(stmt| let $x ← expand! $exp in $s; expand! $exp in $s')                -- subsumes (R3, B4, L4)
+  | `(stmt| expand! $exp in let mut $x := $e; $s') => `(stmt| let mut $x := $e; expand! $exp in $s')                      -- subsumes (R4, B5, L5)
+  | `(stmt| expand! $_ in $x:ident := $e) => `(stmt| $x:ident := $e)                                                      -- subsumes (R5, B6, L6)
+  | `(stmt| expand! $exp in if $e then $s₁ else $s₂) => `(stmt| if $e then expand! $exp in $s₁ else expand! $exp in $s₂)  -- subsumes (S6, R6, B7, L7)
+  | `(stmt| expand! $exp in $s) => do
     let s' ← expandStmt s
-    `(stmt|expand! $exp in $s')
+    `(stmt| expand! $exp in $s')
 
 
 macro_rules
@@ -37,22 +37,22 @@ macro_rules
   | `(d! if $e then $s₁ else $s₂) => `(if $e then d! $s₁ else d! $s₂)                       -- (D4)
 
 macro_rules
-  | `(stmt|expand! mut $_ in $e:term) => `(stmt|StateT.lift $e) -- (S1)
-  | `(stmt|expand! mut $y in let $x ← $s; $s') =>               -- (S2)
+  | `(stmt| expand! mut $_ in $e:term) => `(stmt| StateT.lift $e)  -- (S1)
+  | `(stmt| expand! mut $y in let $x ← $s; $s') =>                -- (S2)
     if x == y then
       throw <| Macro.Exception.error x s!"cannot shadow 'mut' variable '{x.getId}'"
     else
-      `(stmt|let $x ← expand! mut $y in $s; let $y ← get; expand! mut $y in $s')
-  | `(stmt|expand! mut $y in let mut $x := $e; $s') =>          -- (S3)
+      `(stmt| let $x ← expand! mut $y in $s; let $y ← get; expand! mut $y in $s')
+  | `(stmt| expand! mut $y in let mut $x := $e; $s') =>           -- (S3)
     if x == y then
       throw <| Macro.Exception.error x s!"cannot shadow 'mut' variable '{x.getId}'"
     else
-      `(stmt|let mut $x := $e; expand! mut $y in $s')
-  | `(stmt|expand! mut $y in $x:ident := $e) =>
+      `(stmt| let mut $x := $e; expand! mut $y in $s')
+  | `(stmt| expand! mut $y in $x:ident := $e) =>
     if x == y then
-      `(stmt|set $e)                                            -- (S5)
+      `(stmt| set $e)                                             -- (S5)
     else
-      `(stmt|$x:ident := $e)                                    -- (S4)
+      `(stmt| $x:ident := $e)                                     -- (S4)
 
 macro:0 "let" "mut" x:ident "←" s:stmt:1 ";" s':stmt : stmt => `(let y ← $s; let mut $x := y; $s') -- (A3)
 macro:0 x:ident "←" s:stmt:1 : stmt => `(let y ← $s; $x:ident := y)                                -- (A4)
