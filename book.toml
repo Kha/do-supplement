@@ -12,3 +12,4 @@ build-dir = "out"
 git-repository-url = "https://github.com/Kha/do-supplement"
 additional-css = ["alectryon.css", "pygments.css"]
 additional-js = ["alectryon.js"]
+site-url = "/do-supplement/"

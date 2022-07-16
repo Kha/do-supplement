@@ -78,7 +78,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><li class="part-title">Reference Implementation</li><li class="chapter-item expanded "><a href="Basic.lean.html"><strong aria-hidden="true">1.</strong> Basic do Notation</a></li><li class="chapter-item expanded "><a href="Mut.lean.html"><strong aria-hidden="true">2.</strong> Local Mutation</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="LazyList.lean.html"><strong aria-hidden="true">2.1.</strong> Nondeterminism Monad</a></li></ol></li><li class="chapter-item expanded "><a href="Return.lean.html"><strong aria-hidden="true">3.</strong> Early Return</a></li><li class="chapter-item expanded "><a href="For.lean.html"><strong aria-hidden="true">4.</strong> Iteration</a></li><li class="chapter-item expanded affix "><li class="part-title">Formalization</li><li class="chapter-item expanded "><a href="Formal.lean.html"><strong aria-hidden="true">5.</strong> Formalization</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="intro.html">Introduction</a></li><li class="chapter-item expanded affix "><li class="part-title">Reference Implementation</li><li class="chapter-item expanded "><a href="Basic.lean.html"><strong aria-hidden="true">1.</strong> Basic do Notation</a></li><li class="chapter-item expanded "><a href="Mut.lean.html"><strong aria-hidden="true">2.</strong> Local Mutation</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="LazyList.lean.html"><strong aria-hidden="true">2.1.</strong> Nondeterminism Monad</a></li></ol></li><li class="chapter-item expanded "><a href="Return.lean.html"><strong aria-hidden="true">3.</strong> Early Return</a></li><li class="chapter-item expanded "><a href="For.lean.html"><strong aria-hidden="true">4.</strong> Iteration</a></li><li class="chapter-item expanded affix "><li class="part-title">Formalization</li><li class="chapter-item expanded "><a href="Formal.lean.html"><strong aria-hidden="true">5.</strong> Formalization</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -140,7 +140,14 @@
 
                 <div id="content" class="content">
                     <main>
-                        <div style="break-before: page; page-break-before: always;"></div><h1 id="basic-do-notation"><a class="header" href="#basic-do-notation">Basic <code>do</code> notation</a></h1>
+                        <h1 id="introduction"><a class="header" href="#introduction">Introduction</a></h1>
+<p>This is the rendered supplement to the paper &quot;‘do’ Unchained: Embracing Local Imperativity in a Purely Functional Language&quot;.
+It contains</p>
+<ul>
+<li>a reference implementation of the described <code>do</code> extensions using the Lean 4 macro system</li>
+<li>a Lean formalization of the translation function, the static and dynamic semantics, and the equivalence proof described in the paper</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="basic-do-notation"><a class="header" href="#basic-do-notation">Basic <code>do</code> notation</a></h1>
 <pre class="alectryon-io type-info-hidden highlight"><!-- Generator: Alectryon --><span class="alectryon-wsp"><span class="alectryon-token"><span class="kn">open</span></span><span class="alectryon-token"> Lean
 
 </span><span class="alectryon-token"><span class="k">declare_syntax_cat</span></span><span class="alectryon-token"> stmt
@@ -2263,9 +2270,7 @@ We want to make it clear that we do not depend on it.</p>
 <span class="kn">import</span> Lean
 <span class="kn">import</span> Aesop</span></span></pre>
 <h1 id="formalization-of-extended-do-translation"><a class="header" href="#formalization-of-extended-do-translation">Formalization of Extended <code>do</code> Translation</a></h1>
-<p>This is the supplement file to the paper &quot;‘do’ Unchained: Embracing Local Imperativity in a Purely
-Functional Language&quot;.
-It contains an intrinsically typed representation of the paper's syntax of <code>do</code> statements as well
+<p>An intrinsically typed representation of the paper's syntax of <code>do</code> statements as well
 of their translation functions and an equivalence proof thereof to a simple denotational semantics.</p>
 <pre class="alectryon-io type-info-hidden highlight"><!-- Generator: Alectryon --></pre>
 <h2 id="contexts"><a class="header" href="#contexts">Contexts</a></h2>
