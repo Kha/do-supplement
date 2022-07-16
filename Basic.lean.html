@@ -1,0 +1,217 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Basic do Notation - &quot;&#x27;do&#x27; Unchained&quot; rendered supplement</title>
+        <!-- Custom HTML head -->
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="alectryon.css">
+        <link rel="stylesheet" href="pygments.css">
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme && theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar && sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><li class="part-title">Reference Implementation</li><li class="chapter-item expanded "><a href="Basic.lean.html" class="active"><strong aria-hidden="true">1.</strong> Basic do Notation</a></li><li class="chapter-item expanded "><a href="Mut.lean.html"><strong aria-hidden="true">2.</strong> Local Mutation</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="LazyList.lean.html"><strong aria-hidden="true">2.1.</strong> Nondeterminism Monad</a></li></ol></li><li class="chapter-item expanded "><a href="Return.lean.html"><strong aria-hidden="true">3.</strong> Early Return</a></li><li class="chapter-item expanded "><a href="For.lean.html"><strong aria-hidden="true">4.</strong> Iteration</a></li><li class="chapter-item expanded affix "><li class="part-title">Formalization</li><li class="chapter-item expanded "><a href="Formal.lean.html"><strong aria-hidden="true">5.</strong> Formalization</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">&quot;&#x27;do&#x27; Unchained&quot; rendered supplement</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/Kha/do-supplement" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="basic-do-notation"><a class="header" href="#basic-do-notation">Basic <code>do</code> notation</a></h1>
+<pre class="alectryon-io type-info-hidden highlight"><!-- Generator: Alectryon --><span class="alectryon-wsp"><span class="alectryon-token"><span class="kn">open</span></span><span class="alectryon-token"> Lean
+
+</span><span class="alectryon-token"><span class="k">declare_syntax_cat</span></span><span class="alectryon-token"> stmt
+</span><span class="alectryon-token"><span class="k">syntax</span></span><span class="alectryon-token"> <span class="s2">&quot;do&#39;&quot;</span> stmt : term
+
+<span class="c1">-- Prevent `if ...` from being parsed as a term</span>
+</span><span class="alectryon-token"><span class="k">syntax</span></span><span class="alectryon-token"> (</span><span class="alectryon-token"><span class="k">priority</span></span><span class="alectryon-token"> := </span><span class="alectryon-token"><span class="k">low</span></span><span class="alectryon-token">) term : stmt
+</span><span class="alectryon-token"><span class="k">syntax</span></span><span class="alectryon-token"> <span class="s2">&quot;let&quot;</span> ident <span class="s2">&quot;←&quot;</span> stmt:<span class="mi">1</span> <span class="s2">&quot;;&quot;</span> stmt : stmt
+</span><span class="alectryon-token"><span class="k">macro</span></span><span class="alectryon-token"> <span class="s2">&quot;{&quot;</span> </span><span class="alectryon-token"><div class="alectryon-type-info-wrapper"><small class="alectryon-type-info"><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span class="hyp-type"><var>s</var><b>: </b><span>TSyntax `stmt</span></span></div></blockquote></div></small></div><span class="nv">s</span></span><span class="alectryon-token">:stmt <span class="s2">&quot;}&quot;</span> : stmt <span class="bp">=&gt;</span> <span class="bp">`</span>(<span class="bp">$</span></span><span class="alectryon-token"><div class="alectryon-type-info-wrapper"><small class="alectryon-type-info"><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span class="hyp-type"><var>s</var><b>: </b><span>TSyntax `stmt</span></span></div></blockquote></div></small></div><span class="nv">s</span></span><span class="alectryon-token">)</span><span class="alectryon-token">
+
+<span class="c">/-</span><span class="cm"></span>
+<span class="cm">  Remark: we annotate `macro`s and `macro_rules` with their corresponding</span>
+<span class="cm">  translation/abbreviation id from the paper.</span>
+<span class="cm">-/</span>
+
+</span><span class="alectryon-token"><span class="k">syntax</span></span><span class="alectryon-token"> <span class="s2">&quot;d!&quot;</span> stmt : term  <span class="c1">-- corresponds to `D(s)`</span>
+
+</span><span class="alectryon-token"><span class="k">macro_rules</span></span><span class="alectryon-token">
+  <span class="bp">|</span> <span class="bp">`</span>(</span><span class="alectryon-token"><span class="k">do</span><span class="bp">&#39;</span></span><span class="alectryon-token"> <span class="bp">$</span></span><span class="alectryon-token"><div class="alectryon-type-info-wrapper"><small class="alectryon-type-info"><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span class="hyp-type"><var>s</var><b>: </b><span>TSyntax `stmt</span></span></div></blockquote></div></small></div><span class="nv">s</span></span><span class="alectryon-token">) <span class="bp">=&gt;</span> <span class="bp">`</span>(</span><span class="alectryon-token">d<span class="bp">!</span></span><span class="alectryon-token"> <span class="bp">$</span></span><span class="alectryon-token"><div class="alectryon-type-info-wrapper"><small class="alectryon-type-info"><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span class="hyp-type"><var>s</var><b>: </b><span>TSyntax `stmt</span></span></div></blockquote></div></small></div><span class="nv">s</span></span><span class="alectryon-token">)</span><span class="alectryon-token">  <span class="c1">-- (1)</span>
+
+<span class="c1">-- helper function; see usage below</span>
+</span><span class="alectryon-token"><span class="kd">def</span></span><span class="alectryon-token"> </span><span class="alectryon-token"><div class="alectryon-type-info-wrapper"><small class="alectryon-type-info"><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span class="hyp-type"><var>expandStmt</var><b>: </b><span>TSyntax `stmt → MacroM (TSyntax `stmt)</span></span></div></blockquote></div></small></div><span class="nv">expandStmt</span></span><span class="alectryon-token"> (</span><span class="alectryon-token"><div class="alectryon-type-info-wrapper"><small class="alectryon-type-info"><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span class="hyp-type"><var>s</var><b>: </b><span>TSyntax `stmt</span></span></div></blockquote></div></small></div><span class="nv">s</span></span><span class="alectryon-token"> : </span><span class="alectryon-token"><div class="alectryon-type-info-wrapper"><small class="alectryon-type-info"><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span class="hyp-type"><var>TSyntax</var><b>: </b><span>SyntaxNodeKinds → Type</span></span></div></blockquote></div></small></div>TSyntax</span><span class="alectryon-token"> </span><span class="alectryon-token"><div class="alectryon-type-info-wrapper"><small class="alectryon-type-info"><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span class="hyp-type"><var>`stmt</var><b>: </b><span>Name</span></span></div></blockquote></div></small></div><span class="bp">`</span>stmt</span><span class="alectryon-token">) : </span><span class="alectryon-token"><div class="alectryon-type-info-wrapper"><small class="alectryon-type-info"><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span class="hyp-type"><var>MacroM</var><b>: </b><span>Type → Type</span></span></div></blockquote></div></small></div>MacroM</span><span class="alectryon-token"> (</span><span class="alectryon-token"><div class="alectryon-type-info-wrapper"><small class="alectryon-type-info"><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span class="hyp-type"><var>TSyntax</var><b>: </b><span>SyntaxNodeKinds → Type</span></span></div></blockquote></div></small></div>TSyntax</span><span class="alectryon-token"> </span><span class="alectryon-token"><div class="alectryon-type-info-wrapper"><small class="alectryon-type-info"><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span class="hyp-type"><var>`stmt</var><b>: </b><span>Name</span></span></div></blockquote></div></small></div><span class="bp">`</span>stmt</span><span class="alectryon-token">) := </span><span class="alectryon-token"><span class="k">do</span></span><span class="alectryon-token">
+  </span><span class="alectryon-token"><span class="k">let</span></span><span class="alectryon-token"> </span><span class="alectryon-token"><div class="alectryon-type-info-wrapper"><small class="alectryon-type-info"><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span class="hyp-type"><var>s'</var><b>: </b><span>Syntax</span></span></div></blockquote></div></small></div><span class="nv">s&#39;</span></span><span class="alectryon-token"> <span class="bp">←</span> </span><span class="alectryon-token"><div class="alectryon-type-info-wrapper"><small class="alectryon-type-info"><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span class="hyp-type"><var>expandMacros</var><b>: </b><span>Syntax → (optParam (SyntaxNodeKind → Bool) fun k =&gt; k != `Lean.Parser.Term.byTactic) → MacroM Syntax</span></span></div></blockquote></div></small></div>expandMacros</span><span class="alectryon-token"> </span><span class="alectryon-token"><div class="alectryon-type-info-wrapper"><small class="alectryon-type-info"><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span class="hyp-type"><var>s</var><b>: </b><span>TSyntax `stmt</span></span></div></blockquote></div></small></div><span class="nv">s</span></span><span class="alectryon-token">
+  </span><span class="alectryon-token"><span class="k">if</span></span><span class="alectryon-token"> </span><span class="alectryon-token"><div class="alectryon-type-info-wrapper"><small class="alectryon-type-info"><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span class="hyp-type"><var>s</var><b>: </b><span>TSyntax `stmt</span></span></div></blockquote></div></small></div><span class="nv">s</span></span><span class="alectryon-token"> <span class="bp">==</span> </span><span class="alectryon-token"><div class="alectryon-type-info-wrapper"><small class="alectryon-type-info"><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span class="hyp-type"><var>s'</var><b>: </b><span>Syntax</span></span></div></blockquote></div></small></div><span class="nv">s&#39;</span></span><span class="alectryon-token"> </span><span class="alectryon-token"><span class="k">then</span></span><span class="alectryon-token">
+    </span><span class="alectryon-token"><div class="alectryon-type-info-wrapper"><small class="alectryon-type-info"><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span class="hyp-type"><var>Macro.throwUnsupported</var><b>: </b><span>{α : Type} → MacroM α</span></span></div></blockquote></div></small></div>Macro.throwUnsupported</span><span class="alectryon-token">
+  </span><span class="alectryon-token"><span class="k">else</span></span><span class="alectryon-token">
+    <span class="c1">-- There is no static guarantee that `expandMacros` stays in the `stmt` category,</span>
+    <span class="c1">-- but it is true for all our macros</span>
+    </span><span class="alectryon-token"><span class="k">return</span></span><span class="alectryon-token"> </span><span class="alectryon-token"><div class="alectryon-type-info-wrapper"><small class="alectryon-type-info"><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span class="hyp-type"><var>TSyntax.mk</var><b>: </b><span>{ks : SyntaxNodeKinds} → Syntax → TSyntax ks</span></span></div></blockquote></div></small></div>TSyntax.mk</span><span class="alectryon-token"> </span><span class="alectryon-token"><div class="alectryon-type-info-wrapper"><small class="alectryon-type-info"><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span class="hyp-type"><var>s'</var><b>: </b><span>Syntax</span></span></div></blockquote></div></small></div><span class="nv">s&#39;</span></span><span class="alectryon-token">
+
+</span><span class="alectryon-token"><span class="k">macro_rules</span></span><span class="alectryon-token">
+  <span class="bp">|</span> <span class="bp">`</span>(</span><span class="alectryon-token">d<span class="bp">!</span></span><span class="alectryon-token"> <span class="bp">$</span></span><span class="alectryon-token"><div class="alectryon-type-info-wrapper"><small class="alectryon-type-info"><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span class="hyp-type"><var>e</var><b>: </b><span>TSyntax `term</span></span></div></blockquote></div></small></div><span class="nv">e</span></span><span class="alectryon-token">:term) <span class="bp">=&gt;</span> <span class="bp">`</span>(<span class="bp">$</span></span><span class="alectryon-token"><div class="alectryon-type-info-wrapper"><small class="alectryon-type-info"><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span class="hyp-type"><var>e</var><b>: </b><span>TSyntax `term</span></span></div></blockquote></div></small></div><span class="nv">e</span></span><span class="alectryon-token">)                                       <span class="c1">-- (D1)</span>
+  <span class="bp">|</span> <span class="bp">`</span>(</span><span class="alectryon-token">d<span class="bp">!</span></span><span class="alectryon-token"> </span><span class="alectryon-token"><span class="k">let</span></span><span class="alectryon-token"> <span class="bp">$</span></span><span class="alectryon-token"><div class="alectryon-type-info-wrapper"><small class="alectryon-type-info"><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span class="hyp-type"><var>x</var><b>: </b><span>TSyntax `ident</span></span></div></blockquote></div></small></div><span class="nv">x</span></span><span class="alectryon-token"> <span class="bp">←</span> <span class="bp">$</span></span><span class="alectryon-token"><div class="alectryon-type-info-wrapper"><small class="alectryon-type-info"><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span class="hyp-type"><var>s</var><b>: </b><span>TSyntax `stmt</span></span></div></blockquote></div></small></div><span class="nv">s</span></span><span class="alectryon-token"><span class="bp">;</span> <span class="bp">$</span></span><span class="alectryon-token"><div class="alectryon-type-info-wrapper"><small class="alectryon-type-info"><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span class="hyp-type"><var>s'</var><b>: </b><span>TSyntax `stmt</span></span></div></blockquote></div></small></div><span class="nv">s&#39;</span></span><span class="alectryon-token">) <span class="bp">=&gt;</span> <span class="bp">`</span>((</span><span class="alectryon-token">d<span class="bp">!</span></span><span class="alectryon-token"> <span class="bp">$</span></span><span class="alectryon-token"><div class="alectryon-type-info-wrapper"><small class="alectryon-type-info"><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span class="hyp-type"><var>s</var><b>: </b><span>TSyntax `stmt</span></span></div></blockquote></div></small></div><span class="nv">s</span></span><span class="alectryon-token">) <span class="bp">&gt;&gt;=</span> </span><span class="alectryon-token"><span class="k">fun</span></span><span class="alectryon-token"> <span class="bp">$</span></span><span class="alectryon-token"><div class="alectryon-type-info-wrapper"><small class="alectryon-type-info"><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span class="hyp-type"><var>x</var><b>: </b><span>TSyntax `ident</span></span></div></blockquote></div></small></div><span class="nv">x</span></span><span class="alectryon-token"> <span class="bp">=&gt;</span> (</span><span class="alectryon-token">d<span class="bp">!</span></span><span class="alectryon-token"> <span class="bp">$</span></span><span class="alectryon-token"><div class="alectryon-type-info-wrapper"><small class="alectryon-type-info"><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span class="hyp-type"><var>s'</var><b>: </b><span>TSyntax `stmt</span></span></div></blockquote></div></small></div><span class="nv">s&#39;</span></span><span class="alectryon-token">))  <span class="c1">-- (D2)</span>
+  <span class="bp">|</span> <span class="bp">`</span>(</span><span class="alectryon-token">d<span class="bp">!</span></span><span class="alectryon-token"> <span class="bp">$</span></span><span class="alectryon-token"><div class="alectryon-type-info-wrapper"><small class="alectryon-type-info"><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span class="hyp-type"><var>s</var><b>: </b><span>TSyntax `stmt</span></span></div></blockquote></div></small></div><span class="nv">s</span></span><span class="alectryon-token">) <span class="bp">=&gt;</span> </span><span class="alectryon-token"><span class="k">do</span></span><span class="alectryon-token">
+    <span class="c1">-- fallback rule: try to expand abbreviation</span>
+    </span><span class="alectryon-token"><span class="k">let</span></span><span class="alectryon-token"> </span><span class="alectryon-token"><div class="alectryon-type-info-wrapper"><small class="alectryon-type-info"><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span class="hyp-type"><var>s'</var><b>: </b><span>TSyntax `stmt</span></span></div></blockquote></div></small></div><span class="nv">s&#39;</span></span><span class="alectryon-token"> <span class="bp">←</span> </span><span class="alectryon-token"><div class="alectryon-type-info-wrapper"><small class="alectryon-type-info"><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span class="hyp-type"><var>expandStmt</var><b>: </b><span>TSyntax `stmt → MacroM (TSyntax `stmt)</span></span></div></blockquote></div></small></div><span class="k">expandStmt</span></span><span class="alectryon-token"> </span><span class="alectryon-token"><div class="alectryon-type-info-wrapper"><small class="alectryon-type-info"><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span class="hyp-type"><var>s</var><b>: </b><span>TSyntax `stmt</span></span></div></blockquote></div></small></div><span class="nv">s</span></span><span class="alectryon-token">
+    <span class="bp">`</span>(</span><span class="alectryon-token">d<span class="bp">!</span></span><span class="alectryon-token"> <span class="bp">$</span></span><span class="alectryon-token"><div class="alectryon-type-info-wrapper"><small class="alectryon-type-info"><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span class="hyp-type"><var>s'</var><b>: </b><span>TSyntax `stmt</span></span></div></blockquote></div></small></div><span class="nv">s&#39;</span></span><span class="alectryon-token">)</span><span class="alectryon-token">
+
+</span><span class="alectryon-token"><span class="k">macro</span></span><span class="alectryon-token"> <span class="s2">&quot;let&quot;</span> </span><span class="alectryon-token"><div class="alectryon-type-info-wrapper"><small class="alectryon-type-info"><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span class="hyp-type"><var>x</var><b>: </b><span>TSyntax `ident</span></span></div></blockquote></div></small></div><span class="nv">x</span></span><span class="alectryon-token">:ident <span class="s2">&quot;:=&quot;</span> </span><span class="alectryon-token"><div class="alectryon-type-info-wrapper"><small class="alectryon-type-info"><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span class="hyp-type"><var>e</var><b>: </b><span>TSyntax `term</span></span></div></blockquote></div></small></div><span class="nv">e</span></span><span class="alectryon-token">:term <span class="s2">&quot;;&quot;</span> </span><span class="alectryon-token"><div class="alectryon-type-info-wrapper"><small class="alectryon-type-info"><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span class="hyp-type"><var>s</var><b>: </b><span>TSyntax `stmt</span></span></div></blockquote></div></small></div><span class="nv">s</span></span><span class="alectryon-token">:stmt : stmt <span class="bp">=&gt;</span> <span class="bp">`</span>(</span><span class="alectryon-token"><span class="k">let</span></span><span class="alectryon-token"> <span class="bp">$</span></span><span class="alectryon-token"><div class="alectryon-type-info-wrapper"><small class="alectryon-type-info"><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span class="hyp-type"><var>x</var><b>: </b><span>TSyntax `ident</span></span></div></blockquote></div></small></div><span class="nv">x</span></span><span class="alectryon-token"> <span class="bp">←</span> pure <span class="bp">$</span></span><span class="alectryon-token"><div class="alectryon-type-info-wrapper"><small class="alectryon-type-info"><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span class="hyp-type"><var>e</var><b>: </b><span>TSyntax `term</span></span></div></blockquote></div></small></div><span class="nv">e</span></span><span class="alectryon-token"><span class="bp">;</span> <span class="bp">$</span></span><span class="alectryon-token"><div class="alectryon-type-info-wrapper"><small class="alectryon-type-info"><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span class="hyp-type"><var>s</var><b>: </b><span>TSyntax `stmt</span></span></div></blockquote></div></small></div><span class="nv">s</span></span><span class="alectryon-token">)</span><span class="alectryon-token">  <span class="c1">-- (A1)</span>
+<span class="c1">-- priority `0` prevents `;` from being used in trailing contexts without braces (see e.g. `:1` above)</span>
+</span><span class="alectryon-token"><span class="k">macro</span></span><span class="alectryon-token">:<span class="mi">0</span> </span><span class="alectryon-token"><div class="alectryon-type-info-wrapper"><small class="alectryon-type-info"><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span class="hyp-type"><var>s₁</var><b>: </b><span>TSyntax `stmt</span></span></div></blockquote></div></small></div><span class="nv">s₁</span></span><span class="alectryon-token">:stmt <span class="s2">&quot;;&quot;</span> </span><span class="alectryon-token"><div class="alectryon-type-info-wrapper"><small class="alectryon-type-info"><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span class="hyp-type"><var>s₂</var><b>: </b><span>TSyntax `stmt</span></span></div></blockquote></div></small></div><span class="nv">s₂</span></span><span class="alectryon-token">:stmt : stmt <span class="bp">=&gt;</span> <span class="bp">`</span>(</span><span class="alectryon-token"><span class="k">let</span></span><span class="alectryon-token"> x <span class="bp">←</span> <span class="bp">$</span></span><span class="alectryon-token"><div class="alectryon-type-info-wrapper"><small class="alectryon-type-info"><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span class="hyp-type"><var>s₁</var><b>: </b><span>TSyntax `stmt</span></span></div></blockquote></div></small></div><span class="nv">s₁</span></span><span class="alectryon-token"><span class="bp">;</span> <span class="bp">$</span></span><span class="alectryon-token"><div class="alectryon-type-info-wrapper"><small class="alectryon-type-info"><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span class="hyp-type"><var>s₂</var><b>: </b><span>TSyntax `stmt</span></span></div></blockquote></div></small></div><span class="nv">s₂</span></span><span class="alectryon-token">)</span><span class="alectryon-token">                     <span class="c1">-- (A2)</span></span></span></pre>
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="next" href="Mut.lean.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="next" href="Mut.lean.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+        <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+        <script src="elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="searcher.js" type="text/javascript" charset="utf-8"></script>
+        <script src="clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        <script type="text/javascript" src="alectryon.js"></script>
+    </body>
+</html>
