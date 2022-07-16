@@ -14,7 +14,7 @@ Do/
 ```
 
 `Do/Formal.lean` contains the formalization of the equivalence proof written in a literate style explaining more details not mentioned in the paper.
-Each Lean file comes with a corresponding `.html` file rendered using Alectryon that allows for exploring the file including type and goal information in any browser without installing Lean.
+Each Lean file comes with a corresponding `.html` file rendered using Alectryon that allows for exploring the file including type and goal information in any browser without installing Lean (hosted [here](https://kha.github.io/do-supplement/) for the latest version of the [source repository](https://github.com/Kha/do-supplement)).
 The directory `gh-survey` contains simple scripts for aggregating the use of extended `do` notation from Lean projects on GitHub.
 
 ## Exploring the supplement with Lean
