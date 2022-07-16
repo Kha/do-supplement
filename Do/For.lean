@@ -1,12 +1,12 @@
 import Do.Return
 
+/-! # Iteration -/
+
 open Lean
 
 /- Disable the automatic monadic lifting feature described in the paper.
    We want to make it clear that we do not depend on it. -/
 set_option autoLift false
-
-/- Iteration -/
 
 syntax "for" ident "in" term "do'" stmt:1 : stmt
 syntax "break " : stmt

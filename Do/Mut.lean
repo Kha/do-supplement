@@ -1,13 +1,13 @@
 import Do.Basic
 import Do.LazyList
 
+/-! # Local Mutation -/
+
 open Lean
 
-/- Disable the automatic monadic lifting feature described in the paper.
+/-! Disable the automatic monadic lifting feature described in the paper.
    We want to make it clear that we do not depend on it. -/
 set_option autoLift false
-
-/- Local Mutation -/
 
 syntax "let" "mut" ident ":=" term ";" stmt : stmt
 syntax ident ":=" term : stmt

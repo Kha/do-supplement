@@ -1,3 +1,5 @@
+/-! # `LazyList` Nondeterminism Monad -/
+
 inductive LazyList (α : Type u) where
   | nil                               : LazyList α
   | cons (hd : α) (tl : LazyList α)   : LazyList α

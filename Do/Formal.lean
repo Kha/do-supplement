@@ -3,23 +3,18 @@ import Lean
 import Aesop
 
 /-!
-==========================================
-Formalization of Extended `do` Translation
-==========================================
+# Formalization of Extended `do` Translation
 
-This is the supplement file to the paper "‘do’ Unchained: Embracing Local Imperativity in a Purely
-Functional Language".
-It contains an intrinsically typed representation of the paper's syntax of `do` statements as well
+An intrinsically typed representation of the paper's syntax of `do` statements as well
 of their translation functions and an equivalence proof thereof to a simple denotational semantics. -/
 
 /-!
-Contexts
---------
+## Contexts
 
 We represent contexts as lists of types and assignments of them as heterogeneous lists over these types.
 As is common with lists, contexts grow to the left in our presentation.
 The following encoding of heterogeneous lists avoids the universe bump of the usual inductive definition
-(https://lists.chalmers.se/pipermail/agda/2010/001826.html). -/
+(<https://lists.chalmers.se/pipermail/agda/2010/001826.html>). -/
 def HList : List (Type u) → Type u
   | []      => PUnit
   | α :: αs => α × HList αs
@@ -79,8 +74,7 @@ def Assg.dropBot : {Γ : _} → Assg (Γ ++ [α]) → Assg Γ
   | _ :: _, a :: as => a :: dropBot as
 
 /-!
-Intrinsically Typed Representation of `do` Statements
------------------------------------------------------
+## Intrinsically Typed Representation of `do` Statements
 
 where
 
@@ -128,8 +122,7 @@ macro:max (priority := high) e:term:max noWs "[" ρ:term "]" "[" σ:term "]" : t
 macro:max (priority := high) σ:term:max noWs "[" x:term " ↦ " v:term "]" : term => `(HList.set $σ $x $v)
 
 /-!
-Dynamic Evaluation Function
----------------------------
+## Dynamic Evaluation Function
 
 A direct encoding of the paper's operational semantics as a denotational function,
 generalized over an arbitrary monad.
@@ -185,8 +178,7 @@ def Do.eval [Monad m] (s : Do m α) : m α :=  -- corresponds to the reduction r
 notation "⟦" s "⟧" => Do.eval s
 
 /-!
-Translation Functions
----------------------
+## Translation Functions
 
 We adjust the immutable context where necessary.
 The mutable context does not have to be adjusted. -/
@@ -358,14 +350,13 @@ decreasing_by D_tac
 def Do.trans [Monad m] (s : Do m α) : m α := runCatch (D (R s) ∅)
 
 /-!
-Equivalence Proof
------------------
+## Equivalence Proof
 
 Using the monadic dynamic semantics, we can modularly prove for each individual translation function that
 evaluating its output is equivalent to directly evaluating the input, modulo some lifting and adjustment
 of resulting values. After induction on the statement, the proofs are mostly concerned with case splitting,
 application of congruence theorems, and simplification. We can mostly offload these tasks onto
-`aesop <https://github.com/JLimperg/aesop>`.
+[Aesop](https://github.com/JLimperg/aesop).
 
 -/
 attribute [local simp] map_eq_pure_bind ExceptT.run_bind
@@ -549,8 +540,7 @@ theorem Do.trans_eq_eval [Monad m] [LawfulMonad m] : ∀ s : Do m α, Do.trans s
   aesop (add norm simp [D_eq, eval_R], norm unfold [runCatch, Do.trans, Do.eval])
 
 /-!
-Partial Evaluation
-------------------
+## Partial Evaluation
 
 We define a new term notation `simp [...] in e` that rewrites the term e using the given
 simplification theorems.

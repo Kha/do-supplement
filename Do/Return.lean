@@ -1,12 +1,12 @@
 import Do.Mut
 
+/-! # Early Return -/
+
 open Lean
 
 /- Disable the automatic monadic lifting feature described in the paper.
    We want to make it clear that we do not depend on it. -/
 set_option autoLift false
-
-/- Early Return -/
 
 def runCatch [Monad m] (x : ExceptT α m α) : m α :=
   ExceptT.run x >>= fun

@@ -1,4 +1,4 @@
-/- Basic `do` notation -/
+/-! # Basic `do` notation -/
 
 open Lean
 

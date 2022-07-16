@@ -1,0 +1,15 @@
+[book]
+authors = ["Leonardo de Moura", "Sebastian Ullrich"]
+language = "en"
+multilingual = false
+src = "."
+title = "\"'do' Unchained\" rendered supplement"
+
+[build]
+build-dir = "out"
+
+[output.html]
+git-repository-url = "https://github.com/Kha/do-supplement"
+additional-css = ["alectryon.css", "pygments.css"]
+additional-js = ["alectryon.js"]
+site-url = "/do-supplement/"
