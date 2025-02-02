@@ -63,8 +63,6 @@ variable (ma ma' : m α)
 variable (b : Bool)
 variable (xs : List α) (act : α → m Unit)
 
-attribute [local simp] map_eq_pure_bind
-
 example [LawfulMonad m] :
     (do' for x in xs do' {
            act x
@@ -83,9 +81,6 @@ def ex2 (f : β → α → m β) (init : β) (xs : List α) : m β := do'
 example [LawfulMonad m] (f : β → α → m β) :
     ex2 f init xs = xs.foldlM f init := by
   unfold ex2; induction xs generalizing init <;> simp_all!
-
-@[simp] theorem List.find?_cons {xs : List α} : (x::xs).find? p = if p x then some x else xs.find? p := by
-  cases h : p x <;> simp_all!
 
 example (p : α → Bool) : Id.run
     (do' for x in xs do' {

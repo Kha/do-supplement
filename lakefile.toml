@@ -1,0 +1,11 @@
+name = "Do"
+version = "0.1.0"
+defaultTargets = ["Do"]
+
+[[lean_lib]]
+name = "Do"
+
+[[require]]
+scope = "leanprover-community"
+name = "aesop"
+rev = "stable"

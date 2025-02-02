@@ -11,7 +11,7 @@ set_option autoLift false
 
 syntax "let" "mut" ident ":=" term ";" stmt : stmt
 syntax ident ":=" term : stmt
-syntax "if" term "then" stmt "else" stmt:1 : stmt
+syntax "if" term "then" stmt:1 "else" stmt:1 : stmt
 
 declare_syntax_cat expander
 -- generic syntax for traversal-like functions S_y/R/B/L
@@ -54,12 +54,12 @@ macro_rules
     else
       `(stmt| $x:ident := $e)                                     -- (S4)
 
-macro:0 "let" "mut" x:ident "←" s:stmt:1 ";" s':stmt : stmt => `(let y ← $s; let mut $x := y; $s') -- (A3)
-macro:0 x:ident "←" s:stmt:1 : stmt => `(let y ← $s; $x:ident := y)                                -- (A4)
+macro:0 "let" "mut" x:ident "←" s:stmt:1 ";" s':stmt : stmt => `(stmt| let y ← $s; let mut $x := y; $s') -- (A3)
+macro:0 x:ident "←" s:stmt:1 : stmt => `(stmt| let y ← $s; $x:ident := y)                                -- (A4)
 -- a variant of (A4) since we technically cannot make the above macro a `stmt`
-macro:0 x:ident "←" s:stmt:1 ";" s':stmt : stmt => `(let y ← $s; $x:ident := y; $s')
-macro "if" e:term "then" s₁:stmt:1 : stmt => `(if $e then $s₁ else pure ())                        -- (A5)
-macro "unless" e:term "do'" s₂:stmt:1 : stmt => `(if $e then pure () else $s₂)                     -- (A6)
+macro:0 x:ident "←" s:stmt:1 ";" s':stmt : stmt => `(stmt| let y ← $s; $x:ident := y; $s')
+macro "if" e:term "then" s₁:stmt:1 : stmt => `(stmt| if $e then $s₁ else pure ())                        -- (A5)
+macro "unless" e:term "do'" s₂:stmt:1 : stmt => `(stmt| if $e then pure () else $s₂)                     -- (A6)
 
 /-
 The `variable` command instructs Lean to insert the declared variables as bound variables
@@ -68,13 +68,6 @@ in definitions that refer to them.
 
 variable [Monad m]
 variable (ma ma' : m α)
-
-/-
-  Mark `map_eq_pure_bind` as a simplification lemma.
-  It is a theorem for
-  `f <$> x = x >>= pure (f a)`
--/
-attribute [local simp] map_eq_pure_bind
 
 /-
   Remark: an `example` in Lean is like a "nameless" definition, and it does not update the environment.
@@ -86,6 +79,7 @@ attribute [local simp] map_eq_pure_bind
   For more information, see https://github.com/leanprover/lean4/blob/v4.0.0-m4/src/Init/Control/Lawful.lean
 -/
 
+set_option diagnostics true in
 example [LawfulMonad m] :
     (do' let mut x ← ma;
          pure x : m α)

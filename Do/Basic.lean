@@ -8,7 +8,7 @@ syntax "do'" stmt : term
 -- Prevent `if ...` from being parsed as a term
 syntax (priority := low) term : stmt
 syntax "let" ident "←" stmt:1 ";" stmt : stmt
-macro "{" s:stmt "}" : stmt => `($s)
+macro "{" s:stmt "}" : stmt => `(stmt| $s)
 
 /-
   Remark: we annotate `macro`s and `macro_rules` with their corresponding
@@ -38,6 +38,6 @@ macro_rules
     let s' ← expandStmt s
     `(d! $s')
 
-macro "let" x:ident ":=" e:term ";" s:stmt : stmt => `(let $x ← pure $e; $s)  -- (A1)
+macro "let" x:ident ":=" e:term ";" s:stmt : stmt => `(stmt| let $x ← pure $e; $s)  -- (A1)
 -- priority `0` prevents `;` from being used in trailing contexts without braces (see e.g. `:1` above)
-macro:0 s₁:stmt ";" s₂:stmt : stmt => `(let x ← $s₁; $s₂)                     -- (A2)
+macro:0 s₁:stmt ";" s₂:stmt : stmt => `(stmt| let x ← $s₁; $s₂)                     -- (A2)

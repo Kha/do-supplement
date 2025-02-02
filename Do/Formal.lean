@@ -19,8 +19,8 @@ def HList : List (Type u) → Type u
   | []      => PUnit
   | α :: αs => α × HList αs
 
-@[matchPattern] abbrev HList.nil : HList [] := ⟨⟩
-@[matchPattern] abbrev HList.cons (a : α) (as : HList αs) : HList (α :: αs) := (a, as)
+@[match_pattern] abbrev HList.nil : HList [] := ⟨⟩
+@[match_pattern] abbrev HList.cons (a : α) (as : HList αs) : HList (α :: αs) := (a, as)
 
 /-! We overload the common list notations `::` and `[e, ...]` for `HList`. -/
 
@@ -44,10 +44,13 @@ abbrev Assg Γ := HList Γ
 
 /-! Updating a heterogeneous list at a given, guaranteed in-bounds index. -/
 
-def HList.set : {αs : List (Type u)} → HList αs → (i : Fin αs.length) → αs.get i → HList αs
+def HList.set : {αs : List (Type u)} → HList αs → (i : Fin αs.length) → αs[i] → HList αs
   | _ :: _, _ :: as, ⟨0,          _⟩, b => b :: as
   | _ :: _, a :: as, ⟨Nat.succ n, h⟩, b => a :: set as ⟨n, Nat.le_of_succ_le_succ h⟩ b
   | [],     [],      _,               _ => []
+
+@[simp] theorem HList.set_zero : HList.set (a :: as) (0 : Fin (_ + 1)) b = b :: as := by
+  simp only [←Fin.mk_zero, HList.set]
 
 /-!
 We write `∅` for empty contexts and assignments and `Γ ⊢ α` for the type of values of type `α` under the context `Γ`
@@ -65,7 +68,7 @@ def Assg.drop : Assg (α :: Γ) → Assg Γ
 
 /-! In one special case, we will need to manipulate contexts from the right, i.e. the outermost scope. -/
 
-def Assg.extendBot (x : α) : {Γ : _} → Assg Γ → Assg (Γ ++ [α])
+@[simp] def Assg.extendBot (x : α) : {Γ : _} → Assg Γ → Assg (Γ ++ [α])
   | [],     []      => [x]
   | _ :: _, a :: as => a :: extendBot x as
 
@@ -94,7 +97,7 @@ inductive Stmt (m : Type → Type u) (ω : Type) : (Γ Δ : List Type) → (b c 
   | expr (e : Γ ⊢ Δ ⊢ m α) : Stmt m ω Γ Δ b c α
   | bind (s : Stmt m ω Γ Δ b c α) (s' : Stmt m ω (α :: Γ) Δ b c β) : Stmt m ω Γ Δ b c β  -- let _ ← s; s'
   | letmut (e : Γ ⊢ Δ ⊢ α) (s : Stmt m ω Γ (α :: Δ) b c β) : Stmt m ω Γ Δ b c β  -- let mut _ := e; s
-  | assg (x : Fin Δ.length) (e : Γ ⊢ Δ ⊢ Δ.get x) : Stmt m ω Γ Δ b c Unit  -- x := e
+  | assg (x : Fin Δ.length) (e : Γ ⊢ Δ ⊢ Δ[x]) : Stmt m ω Γ Δ b c Unit  -- x := e
   | ite (e : Γ ⊢ Δ ⊢ Bool) (s₁ s₂ : Stmt m ω Γ Δ b c α) : Stmt m ω Γ Δ b c α  -- if e then s₁ else s₂
   | ret (e : Γ ⊢ Δ ⊢ ω) : Stmt m ω Γ Δ b c α   -- return e
   | sfor (e : Γ ⊢ Δ ⊢ List α) (s : Stmt m ω (α :: Γ) Δ true true Unit) : Stmt m ω Γ Δ b c Unit  -- for _ in e do s
@@ -159,12 +162,11 @@ and the length of the list in the `for` case secondarily.
         | ⟨Neut.rcont, σ'⟩ => go σ' as
         | ⟨Neut.rbreak, σ'⟩ => pure ⟨(), σ'⟩
         | ⟨Neut.ret o, σ'⟩ => pure ⟨Neut.ret o, σ'⟩
+    termination_by as => (sizeOf s, as.length)
     go σ e[ρ][σ]
   | sbreak, σ => pure ⟨Neut.rbreak, σ⟩
   | scont, σ => pure ⟨Neut.rcont, σ⟩
-termination_by
-  eval s _ => (sizeOf s, 0)
-  eval.go as => (sizeOf s, as.length)
+termination_by s => (sizeOf s, 0)
 
 /-! At the top-level statement, the contexts are empty, no loop control flow statements are allowed, and the return and result type are identical. -/
 
@@ -217,7 +219,7 @@ from the assignment, which (speaking from experience) would eventually be caught
 /-(S3)-/ | Stmt.letmut e s => Stmt.letmut (unmut e) (S s)
          | Stmt.assg x e =>
            if h : x < Δ.length then
-/-(S4)-/     Stmt.assg ⟨x, h⟩ (fun (y :: ρ) σ => List.get_append_left .. ▸ e ρ (Assg.extendBot y σ))
+/-(S4)-/     Stmt.assg ⟨x, h⟩ (fun (y :: ρ) σ => List.getElem_append_left .. ▸ e ρ (Assg.extendBot y σ))
            else
 /-(S5)-/     Stmt.expr (set (σ := α) ∘ₑ cast (List.get_last h) ∘ₑ unmut e)
 /-(S6)-/ | Stmt.ite e s₁ s₂ => Stmt.ite (unmut e) (S s₁) (S s₂)
@@ -323,10 +325,11 @@ theorem Stmt.numExts_C_B [Monad m] (s : Stmt m ω Γ Δ b c β) : numExts (C (B 
 
 -- Auxiliary tactic for showing that `D` terminates
 macro "D_tac" : tactic =>
-  `({simp_wf
-     solve
+  `(tactic|
+    (simp_wf
+     all_goals solve
       | apply Prod.Lex.left; assumption
-      | apply Prod.Lex.right' <;> simp_arith })
+      | apply Prod.Lex.right' <;> simp_arith))
 
 @[simp] def D [Monad m] : Stmt m Empty Γ ∅ false false α → (Γ ⊢ m α)
   | Stmt.expr e => (e[·][∅])
@@ -342,7 +345,7 @@ macro "D_tac" : tactic =>
     fun ρ =>
       runCatch (forM e[ρ][∅] (fun x => runCatch (D (C (B s)) (x :: ρ))))
   | Stmt.ret e => (nomatch e[·][∅])
-termination_by _ s => (s.numExts, sizeOf s)
+termination_by s => (s.numExts, sizeOf s)
 decreasing_by D_tac
 
 /-! Finally we compose `D` and `R` into the translation rule for a top-level statement (1'). -/
@@ -359,7 +362,7 @@ application of congruence theorems, and simplification. We can mostly offload th
 [Aesop](https://github.com/JLimperg/aesop).
 
 -/
-attribute [local simp] map_eq_pure_bind ExceptT.run_bind
+attribute [local simp] ExceptT.run_bind
 attribute [aesop safe apply] bind_congr
 
 theorem eval_R [Monad m] [LawfulMonad m] (s : Stmt m ω Γ Δ b c α) : (R s).eval ρ σ = (ExceptT.lift (s.eval ρ σ) >>= fun x => match (generalizing := false) x with
@@ -371,7 +374,7 @@ theorem eval_R [Monad m] [LawfulMonad m] (s : Stmt m ω Γ Δ b c α) : (R s).ev
   induction s with
   | sfor e =>
     simp only [Stmt.eval, R]
-    induction e ρ σ generalizing σ <;> aesop (add norm unfold Stmt.eval.go)
+    induction e ρ σ generalizing σ <;> aesop
   | _ => aesop (add unsafe cases Neut) (erase Aesop.BuiltinRules.destructProducts)
 
 @[simp] theorem eval_mapAssg [Monad m] [LawfulMonad m] (f : Assg Γ' → Assg Γ) : ∀ (s : Stmt m ω Γ Δ b c β), Stmt.eval ρ (Stmt.mapAssg f s) σ = Stmt.eval (f ρ) s σ := by
@@ -379,7 +382,7 @@ theorem eval_R [Monad m] [LawfulMonad m] (s : Stmt m ω Γ Δ b c α) : (R s).ev
   induction s generalizing Γ' with
   | sfor e s ih =>
     simp only [Stmt.eval, Stmt.mapAssg, Function.comp]
-    induction e (f ρ) σ generalizing σ <;> aesop (add norm unfold Stmt.eval.go)
+    induction e (f ρ) σ generalizing σ <;> aesop
   | _ => aesop (add unsafe cases Neut)
 
 /-!
@@ -390,6 +393,9 @@ def Assg.bot : {Γ : _} → Assg (Γ ++ [α]) → α
   | [],     [a]     => a
   | _ :: _, _ :: as => bot as
 
+@[simp] theorem Assg.extendBot_zero (a : α) (σ : Assg Γ) : Assg.dropBot (Assg.extendBot a σ) = σ := by
+  induction Γ <;> cases σ <;> simp [dropBot, extendBot, *]
+
 @[simp] theorem Assg.dropBot_extendBot (a : α) (σ : Assg Γ) : Assg.dropBot (Assg.extendBot a σ) = σ := by
   induction Γ <;> cases σ <;> simp [dropBot, extendBot, *]
 @[simp] theorem Assg.bot_extendBot (a : α) (σ : Assg Γ) : Assg.bot (Assg.extendBot a σ) = a := by
@@ -397,7 +403,7 @@ def Assg.bot : {Γ : _} → Assg (Γ ++ [α]) → α
 @[simp] theorem Assg.extendBot_bot_dropBot (σ : Assg (Γ ++ [α])) : Assg.extendBot (Assg.bot σ) (Assg.dropBot σ) = σ := by
   induction Γ <;> cases σ <;> simp [dropBot, bot, extendBot, *] <;> rfl
 
-@[simp] theorem Assg.dropBot_set_extendBot_init (a : α) (σ : Assg Γ) (h : i.1 < Γ.length) {b} : Assg.dropBot ((Assg.extendBot a σ).set i b) = σ.set ⟨i.1, h⟩ (List.get_append_left .. ▸ b) := by
+@[simp] theorem Assg.dropBot_set_extendBot_init (a : α) (σ : Assg Γ) (h : i.1 < Γ.length) {b} : Assg.dropBot ((Assg.extendBot a σ).set i b) = σ.set ⟨i.1, h⟩ (List.getElem_append_left .. ▸ b) := by
   induction Γ with
   | nil => contradiction
   | cons  _ _ ih =>
@@ -433,14 +439,14 @@ def Assg.bot : {Γ : _} → Assg (Γ ++ [α]) → α
   | nil =>
     have ⟨i, h'⟩ := i
     cases i
-    · simp [HList.set, extendBot, bot]; rfl
+    · simp [HList.set, extendBot, bot]
     · apply False.elim (Nat.not_lt_zero _ (Nat.lt_of_succ_lt_succ h'))
   | cons  _ _ ih =>
     cases σ
     have ⟨i, h'⟩ := i
     cases i
     · apply False.elim (h (Nat.zero_lt_succ _))
-    · simp [bot]
+    · simp [bot, HList.set]
       rw [ih]
       intro h''
       apply False.elim (h (Nat.succ_lt_succ h''))
@@ -531,7 +537,7 @@ theorem D_eq [Monad m] [LawfulMonad m] : (s : Stmt m Empty Γ ∅ false false α
     have ih := (D_eq (ρ := ·) (C (B s)))
     simp
     induction e ρ ∅ <;> aesop (add safe cases Neut, norm unfold runCatch, norm simp [eval_C, eval_B])
-termination_by _ s => (s.numExts, sizeOf s)
+termination_by s => (s.numExts, sizeOf s)
 decreasing_by D_tac
 
 /-! The equivalence proof cited in the paper follows from the invariants of `D` and `R`. -/
@@ -557,7 +563,7 @@ elab "simp" "[" simps:simpLemma,* "]" "in" e:term : term => do
   let x ← mkFreshExprMVar (← inferType e)
   let goal ← mkFreshExprMVar (← mkEq e x)
   -- disable ζ-reduction to preserve `let`s
-  Term.runTactic goal.mvarId! (← `(tactic| (simp (config := { zeta := false }) [$simps:simpLemma,*]; rfl)))
+  Term.runTactic goal.mvarId! (← `(tactic| (simp (config := { zeta := false }) [$simps:simpLemma,*]; rfl))) .term
   instantiateMVars x
 
 -- further clean up generated programs
@@ -622,9 +628,9 @@ def ex3' [Monad m] (p : α → m Bool) (xss : List (List α)) : m (Option α) :=
         (Stmt.sfor (fun _ _ => xss) <|
           Stmt.sfor (fun ([xs]) _ => xs) <|
             Stmt.bind
-              (Stmt.expr (fun ([x, xs]) _ => p x))
-              (Stmt.ite (fun ([b, x, xs]) _ => b)
-                (Stmt.ret (fun ([b, x, xs]) _ => some x))
+              (Stmt.expr (fun ([x, _xs]) _ => p x))
+              (Stmt.ite (fun ([b, _x, _xs]) _ => b)
+                (Stmt.ret (fun ([_b, x, _xs]) _ => some x))
                 (Stmt.expr (fun _ _ => pure ()))))
         (Stmt.expr (fun _ _ => pure none)))
 
