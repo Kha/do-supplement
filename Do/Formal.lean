@@ -323,14 +323,6 @@ theorem Stmt.numExts_L_L [Monad m] (s : Stmt m ω Γ Δ b c β) : numExts (L (L 
 theorem Stmt.numExts_C_B [Monad m] (s : Stmt m ω Γ Δ b c β) : numExts (C (B s)) ≤ numExts s := by
   induction s <;> simp [Nat.add_le_add, numExts_L_L, *]
 
--- Auxiliary tactic for showing that `D` terminates
-macro "D_tac" : tactic =>
-  `(tactic|
-    (simp_wf
-     all_goals solve
-      | apply Prod.Lex.left; assumption
-      | apply Prod.Lex.right' <;> simp_arith))
-
 @[simp] def D [Monad m] : Stmt m Empty Γ ∅ false false α → (Γ ⊢ m α)
   | Stmt.expr e => (e[·][∅])
   | Stmt.bind s s' => (fun ρ => D s ρ >>= fun x => D s' (x :: ρ))
@@ -346,7 +338,11 @@ macro "D_tac" : tactic =>
       runCatch (forM e[ρ][∅] (fun x => runCatch (D (C (B s)) (x :: ρ))))
   | Stmt.ret e => (nomatch e[·][∅])
 termination_by s => (s.numExts, sizeOf s)
-decreasing_by D_tac
+decreasing_by
+  simp_wf
+  all_goals solve
+  | apply Prod.Lex.left; assumption
+  | apply Prod.Lex.right' <;> simp_arith
 
 /-! Finally we compose `D` and `R` into the translation rule for a top-level statement (1'). -/
 
@@ -519,26 +515,15 @@ theorem eval_C [Monad m] [LawfulMonad m] (s : Stmt m ω Γ Δ false c α) : (C s
     induction e ρ σ generalizing σ <;> aesop (add norm simp eval_L, unsafe apply ExceptT.ext)
   | _ => aesop (add unsafe apply ExceptT.ext)
 
-theorem D_eq [Monad m] [LawfulMonad m] : (s : Stmt m Empty Γ ∅ false false α) →
-    D s ρ = s.eval ρ ∅ >>= fun (Neut.val a, _) => pure a
-  | Stmt.expr e => by simp
-  | Stmt.bind s₁ s₂ => by
-    have ih₁ := @D_eq (s := s₁)
-    have ih₂ := @D_eq (s := s₂)
-    aesop
-  | Stmt.letmut e s => by
-    have := Nat.lt_succ_of_le <| Stmt.numExts_S (Δ := []) s  -- for termination
-    have ih := (D_eq (ρ := ·) (S s))
-    aesop (add safe cases Neut, norm simp eval_S)
-  | Stmt.ite e s₁ s₂ => by simp; split <;> simp [D_eq s₁, D_eq s₂]
-  | Stmt.ret e => nomatch e ρ ∅
-  | Stmt.sfor e s => by
-    have := Nat.lt_succ_of_le <| Stmt.numExts_C_B (Δ := []) s  -- for termination
-    have ih := (D_eq (ρ := ·) (C (B s)))
+theorem D_eq [inst : Monad m] [instLaw : LawfulMonad m] (s : Stmt m Empty Γ ∅ false false α) :
+    D s ρ = s.eval ρ ∅ >>= fun (Neut.val a, _) => pure a := by
+  induction m, Γ, α, inst, s, ρ using D.induct generalizing instLaw with
+  | case5 _ _ _ _ e =>
     simp
-    induction e ρ ∅ <;> aesop (add safe cases Neut, norm unfold runCatch, norm simp [eval_C, eval_B])
-termination_by s => (s.numExts, sizeOf s)
-decreasing_by D_tac
+    induction e ρ ∅
+    · aesop (add norm unfold runCatch)
+    · aesop (add safe cases Neut, norm unfold runCatch, norm simp [eval_C, eval_B])
+  | _ => aesop (add safe cases Neut, norm simp eval_S)
 
 /-! The equivalence proof cited in the paper follows from the invariants of `D` and `R`. -/
 
