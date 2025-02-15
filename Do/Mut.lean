@@ -79,7 +79,6 @@ variable (ma ma' : m α)
   For more information, see https://github.com/leanprover/lean4/blob/v4.0.0-m4/src/Init/Control/Lawful.lean
 -/
 
-set_option diagnostics true in
 example [LawfulMonad m] :
     (do' let mut x ← ma;
          pure x : m α)

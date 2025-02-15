@@ -10,35 +10,5 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2.3.4
-    - name: Setup Nix Cache
-      uses: actions/cache@v2
-      with:
-        path: nix-store-cache
-        key: ${{ matrix.name }}-nix-store-cache-${{ github.sha }}
-        # fall back to (latest) previous cache
-        restore-keys: |
-          ${{ matrix.name }}-nix-store-cache
-    - run: |
-        cp -r nix-store-cache nix-store-cache-copy || true
-    - uses: cachix/install-nix-action@v15
-      with:
-        # https://github.com/NixOS/nix/issues/6572
-        install_url: https://releases.nixos.org/nix/nix-2.7.0/install
-        extra_nix_config: |
-          extra-substituters = file://${{ github.workspace }}/nix-store-cache-copy?priority=10&trusted=true https://lean4.cachix.org/
-          extra-trusted-public-keys = lean4.cachix.org-1:mawtxSxcaiWE24xCXXgh3qnvlTkyU7evRRnGeAhD4Wk=
-    - run: |
-        nix build . .#book -o push -L
-        nix build .#book
-      shell: nix run .#ciShell -- bash -euxo pipefail {0}
-    - name: Publish manual
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./result
-      if: github.ref == 'refs/heads/master' && github.event_name == 'push'
-    - name: Rebuild Nix Store Cache
-      run: |
-        rm -rf nix-store-cache || true
-        nix copy ./push* --to file://$PWD/nix-store-cache?compression=none
+    - uses: actions/checkout@v4
+    - uses: leanprover/lean-action@v1
